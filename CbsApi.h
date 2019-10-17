@@ -414,7 +414,7 @@ struct ICbsActivity : IUnknown {
 
 };
 
-struct ICbsFeaturePackage : IUnknown {
+struct ICbsFeaturePackage : ICbsPackage {
 	virtual HRESULT STDMETHODCALLTYPE QueryInterface(_In_ REFIID riid, _Out_ LPVOID* ppvObject) override = 0;
 	virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
 	virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;

@@ -6,6 +6,8 @@ HRESULT RunApplication()
 	BEGIN_ERROR_HANDLING();
 
 	// todo: do your own work
+
+	// A callback handler interface implemented by user
 	CComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl;
 	CHECK(pCbsSession->RegisterCbsUIHandler(pUiHandler),
 		"Failed to register ICbsUIHandler into current session.");
@@ -17,23 +19,20 @@ HRESULT RunApplication()
 		_T("C:\\Users\\HigHwind\\Desktop\\sandbox"), &pPkg),
 		"Failed to create package from cabinet file.");
 
+	// Install package (the operation will be append to the PoQ)
+	CHECK(pPkg->InitiateChanges(NULL, CbsInstallStateInstalled, pUiHandler),
+		"Failed to initiate a installing change for the cab package.");
+
 	CComPtr<IEnumCbsUpdate> pUpdEnum;
 	CHECK(pPkg->EnumerateUpdates(CbsApplicabilityNotApplicable,
 		CbsSelectabilityClass1, &pUpdEnum),
 		"Failed to enumerate updates from package.");
 
-	ULONG nUpd = 128;
-	std::unique_ptr<CComPtr<ICbsUpdate>[]> arrUpds(new CComPtr<ICbsUpdate>[ nUpd ]);
-
-	CHECK(pUpdEnum->Next(nUpd, (ICbsUpdate**)arrUpds.get(), &nUpd),
-		"Failed to get ICbsUpdate* s.");
-
 	InsertLine(LineSizeLong);
-	
-	for (ULONG iUpd = 0; iUpd < nUpd; iUpd++)
+
+	for (auto pUpd : GetIEnumVector<ICbsUpdate, IEnumCbsUpdate>(pUpdEnum))
 	{
-		auto& pUpd = arrUpds[iUpd];
-		LPTSTR szProp = NULL, szProp2 = NULL;
+		LPTSTR szProp = NULL;
 		CHECK(pUpd->GetProperty(CbsUpdatePropertyDisplayName, &szProp),
 			"Failed to get display name for update.");
 		_tprintf(_T("Detect update: %s\n"), szProp);
@@ -53,22 +52,29 @@ int main()
 	BEGIN_ERROR_HANDLING();
 
 	CHECK(CoInitialize(NULL), "Failed to initialize COM.");
-
-	setlocale(LC_ALL, "");
 	
+	// I18n console host
+	setlocale(LC_ALL, "");
+
+	// The env var of app is used to config CBS's logging setting.
+	SetEnvironmentVariable(_T("COMPONENT_BASED_SERVICING_LOGFILE"), CBS_LOG_FILE);
+
 	CHECK(FindStackByReg(), "Failed to find stack by read registry.");
 	CHECK(LoadCbsCore(), "Failed to load cbscore.dll library.");
 	CHECK(LoadSxSStore(), "Failed to load sxsstore.dll library.");
 	CHECK(InitCbsCoreAndSxSStore(), "Failed to create cbscore and sxsstore class factory.");
-	CHECK(LoadWdsCore(), "Failed to catch wdscore.dll, logging from cbs.log won't be initialized.");
-	
-	CHECK(OpenOfflineSession(_T("E:\\MyCache\\Vx"), _T("E:\\MyCache\\Vx\\Windows"), CbsSessionOptionDoSynchronousCleanup),
+	CHECK(LoadWdsCore(), "Failed to catch wdscore.dll, logging of the application in file won't be initialized.");
+
+	// You can open an online session when you have access to TrustedInstaller using function OpenOnlineSession
+	// Specify the path to a offline windows image. For example: L"D:\\", L"D:\\Windows".
+	CHECK(OpenOfflineSession(_T("E:\\MyCache\\Vx"), _T("E:\\MyCache\\Vx\\Windows"), CbsSessionOptionNone),
 		"Failed to open an offline session for CBS operation.");
 
 	CHECK(RunApplication(), "User-defined operations have NOT been performed fully.");
 
-	CHECK(CloseSessionAndFinalizeCbsCore(), "Failed to close current session and to finalize cbscore.");
-	
+	// Make the changes come into effects.
+	CHECK(CloseSessionAndFinalizeCbsCore(), "Failed to close current session or to finalize cbscore.");
+
 	CoUninitialize();
 
 	return S_OK;

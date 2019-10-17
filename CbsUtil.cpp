@@ -4,8 +4,37 @@ HRESULT WdsLogA(HRESULT hr, WdsLogSource source, WdsLogLevel level, const char* 
 {
 	va_list va;
 
-	CHAR szHrBuffer[255]{};
-	sprintf_s(szHrBuffer, " HRESULT - 0x%x - %s", hr, TextizeHresultA(hr));
+	if (!vpfnWdsSetupLogMessageA)
+	{
+		CHAR szBuffer[255]{};
+		va_start(va, fmt);
+
+		_vsnprintf_s(szBuffer, sizeof(szBuffer) - 1, fmt, va);
+		printf("Log: ");
+		vprintf(fmt, va);
+
+		va_end(va);
+
+		OutputDebugStringA(szBuffer);
+		OutputDebugStringA("\n");
+		printf("\n");
+		
+		return HRESULT_FROM_WIN32(ERROR_INVALID_FUNCTION);
+	}
+
+	va_start(va, fmt);
+
+	return vpfnWdsSetupLogMessageA(
+		vpfnConstructPartialMsgVA(level, fmt, va),
+		source, "D", 0, 1151, __FILE__, __FUNCTION__,
+		vpfnCurrentIP(), NULL, NULL, NULL);
+}
+
+HRESULT WdsLogHrInternalA(HRESULT hr, WdsLogSource source, WdsLogLevel level, const char* fmt, ...)
+{
+	va_list va;
+
+	fmt = CONCAT_STR<CHAR>(fmt, " HRESULT - 0x%x - %s");
 
 	if (!vpfnWdsSetupLogMessageA)
 	{
@@ -19,25 +48,16 @@ HRESULT WdsLogA(HRESULT hr, WdsLogSource source, WdsLogLevel level, const char* 
 		va_end(va);
 
 		OutputDebugStringA(szBuffer);
-		OutputDebugStringA(szHrBuffer);
 		OutputDebugStringA("\n");
-		printf("%s", szHrBuffer);
 		printf("\n");
-		
+
 		return HRESULT_FROM_WIN32(ERROR_INVALID_FUNCTION);
 	}
 
 	va_start(va, fmt);
 
-	vpfnWdsSetupLogMessageA(
-		vpfnConstructPartialMsgVA(level, fmt, va),
-		source, "D", 0, 1151, __FILE__, __FUNCTION__,
-		vpfnCurrentIP(), NULL, NULL, NULL);
-	
-	va_end(va);
-
 	return vpfnWdsSetupLogMessageA(
-		vpfnConstructPartialMsgVA(level, szHrBuffer, NULL),
+		vpfnConstructPartialMsgVA(level, fmt, va),
 		source, "D", 0, 1151, __FILE__, __FUNCTION__,
 		vpfnCurrentIP(), NULL, NULL, NULL);
 }

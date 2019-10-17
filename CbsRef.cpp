@@ -72,7 +72,7 @@ HRESULT FindStackByReg()
 	BEGIN_ERROR_HANDLING();
 
 	try {
-		winreg::RegKey keyStack(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing\\Version"));
+		winreg::RegKey keyStack(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing\\Version"), KEY_QUERY_VALUE);
 		auto vs = keyStack.EnumValues();
 
 		if (vs.empty()) RET_WIN32ERR_LOG(ERROR_NOT_FOUND, "FATAL ERROR: No stack found in the registry!");
@@ -168,6 +168,8 @@ HRESULT LoadWdsCore()
 
 	if (!vpfnWdsSetupLogMessageA || !vpfnConstructPartialMsgVA || !vpfnCurrentIP)
 		RET_LASTERR_LOG("Failed to find proc in DLL WdsCore.dll.");
+
+	WdsLogA(S_OK, WdsLogSourceWDS, WdsLogLevelInfo, "The logging in file %S initialized successfully.", CBS_LOG_FILE);
 
 	return hr;
 }
