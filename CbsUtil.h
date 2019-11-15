@@ -50,19 +50,19 @@ HRESULT WdsLogA(HRESULT hr, WdsLogSource source, WdsLogLevel level, const char* 
 HRESULT WdsLogHrInternalA(HRESULT hr, WdsLogSource source, WdsLogLevel level, const char* fmt, ...);
 SYSTEMTIME WindowsTimeStamp2SystemTime(const UINT64 &timeStamp);
 std::wstring ExpandEnvW(const std::wstring &str);
-HRESULT TextizeCbsInstallState(const _CbsInstallState &st, LPTSTR* ret);
+HRESULT TextizeCbsInstallState(_CbsInstallState &st, LPTSTR* ret);
 LPCTSTR TextizeHresult(HRESULT hr);
 LPCSTR TextizeHresultA(HRESULT hr);
 void InsertLine(UINT uSize);
 
-template <class T, class IEnumT> std::vector<CComPtr<T>> GetIEnumVector(CComPtr<IEnumT> pEnum)
+template <class T, class IEnumT> std::vector<ComPtr<T>> GetIEnumVector(ComPtr<IEnumT> pEnum)
 {
-	std::vector<CComPtr<T>> v;
+	std::vector<ComPtr<T>> v;
 
 	ULONG k;
 
 	do {
-		CComPtr<T> ptr;
+		ComPtr<T> ptr;
 		pEnum->Next(1, (T**)&ptr, &k);
 		if (ptr) v.push_back(ptr);
 	} while (k);

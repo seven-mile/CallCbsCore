@@ -8,22 +8,54 @@ HRESULT RunApplication()
 	// todo: do your own work
 
 	// A callback handler interface implemented by user
-	CComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl;
+	ComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl;
 	CHECK(pCbsSession->RegisterCbsUIHandler(pUiHandler),
 		"Failed to register ICbsUIHandler into current session.");
 
-	CComPtr<ICbsPackage> pPkg;
+	ComPtr<ICbsPackage> pPkg;
 	CHECK(pCbsSession->CreatePackage(NULL, CbsPackageTypeCabinet,
-		_T("C:\\Users\\HigHwind\\Desktop\\windows10.0-kb4465065"
-			"-v3-x64_be21f962bde9c80626b88439f90e1bbb4c97528f.cab"),
-		_T("C:\\Users\\HigHwind\\Desktop\\sandbox"), &pPkg),
+		_T("C:\\Users\\HigHwind\\Desktop\\tmp\\cab\\nt10\\windows10.0-kb3186578-x86_fffce1ba07ca03ebd00979ed5fa1c604a541d6fa.cab"),
+		_T("C:\\Users\\HigHwind\\Desktop\\tmp\\cbstemp\\sandbox"), &pPkg),
 		"Failed to create package from cabinet file.");
 
-	// Install package (the operation will be append to the PoQ)
-	CHECK(pPkg->InitiateChanges(NULL, CbsInstallStateInstalled, pUiHandler),
-		"Failed to initiate a installing change for the cab package.");
+	{
+		LPTSTR szProp;
+		CHECK(pPkg->GetProperty(CbsPackagePropertyIdentityString, &szProp),
+			"Failed to get identity string for the cab package.");
+		_tprintf(_T("Pack: %s\n"), szProp);
 
-	CComPtr<IEnumCbsUpdate> pUpdEnum;
+		CHECK(pPkg->GetProperty(CbsPackagePropertyDescription, &szProp),
+			"Failed to get description for the cab package.");
+		_tprintf(_T("\t%s\n"), szProp);
+
+		CHECK(pPkg->GetProperty(CbsPackagePropertyReleaseType, &szProp),
+			"Failed to get release type for the cab package.");
+		_tprintf(_T("\t%s"), szProp);
+
+		CHECK(pPkg->GetProperty(CbsPackagePropertySupportInformation, &szProp),
+			"Failed to get support info for the cab package.");
+		_tprintf(_T("\t%s\n"), szProp);
+
+		CHECK(pPkg->GetProperty(CbsPackagePropertyKeyword, &szProp),
+			"Failed to get release type for the cab package.");
+		_tprintf(_T("\t%s\n"), szProp);
+	}
+
+	_CbsInstallState appl, curr;
+	CHECK(pPkg->EvaluateApplicability(NULL, &appl, &curr),
+		"Failed to evaluate applicability for the cab package.");
+
+	LPTSTR szApplState, szCurrState;
+	TextizeCbsInstallState(appl, &szApplState);
+	TextizeCbsInstallState(curr, &szCurrState);
+
+	_tprintf(_T("Applicable State: %s Current State: %s.\n"), szApplState, szCurrState);
+
+	// Install package (the operation will be append to the PoQ)
+	//CHECK(pPkg->InitiateChanges(NULL, CbsInstallStateInstalled, pUiHandler),
+	//	"Failed to initiate a installing change for the cab package.");
+
+	ComPtr<IEnumCbsUpdate> pUpdEnum;
 	CHECK(pPkg->EnumerateUpdates(CbsApplicabilityNotApplicable,
 		CbsSelectabilityClass1, &pUpdEnum),
 		"Failed to enumerate updates from package.");
@@ -67,8 +99,8 @@ int main()
 
 	// You can open an online session when you have access to TrustedInstaller using function OpenOnlineSession
 	// Specify the path to a offline windows image. For example: L"D:\\", L"D:\\Windows".
-	CHECK(OpenOfflineSession(_T("E:\\MyCache\\Vx"), _T("E:\\MyCache\\Vx\\Windows"), CbsSessionOptionNone),
-		"Failed to open an offline session for CBS operation.");
+	CHECK(OpenOnlineSession(/*_T("E:\\MyCache\\Vx"), _T("E:\\MyCache\\Vx\\Windows"), */CbsSessionOptionNone),
+		"Failed to open an session for CBS operation.");
 
 	CHECK(RunApplication(), "User-defined operations have NOT been performed fully.");
 

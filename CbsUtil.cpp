@@ -84,7 +84,7 @@ std::wstring ExpandEnvW(const std::wstring &str)
 	return strBuf;
 }
 
-HRESULT TextizeCbsInstallState(const _CbsInstallState &st, LPTSTR* ret)
+HRESULT TextizeCbsInstallState(_CbsInstallState &st, LPTSTR* ret)
 {
 	*ret = NULL;
 	if (st == CbsInstallStatePartiallyInstalled) *ret = (LPTSTR)_T("Partially Installed");

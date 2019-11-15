@@ -1,10 +1,10 @@
 #pragma once
 
-#include <isolation.h>
+#include "isolation.h"
 
 #pragma region Enumerations
 
-enum CbsState {
+enum CbsState : LONG {
 	CbsStateResolvedInvalid = -32,
 	CbsStateStagedInvalid = -64,
 	CbsStateInstalledInvalid = -112,
@@ -26,14 +26,14 @@ enum CbsState {
 	CbsStateCanceled = 4101
 };
 
-enum UpdateSelection {
+enum UpdateSelection : LONG {
 	UpdateSelectionUnknown = -1,
 	UpdateSelectionOff = 0,
 	UpdateSelectionDefault = 255,
 	UpdateSelectionOn = 1
 };
 
-enum _CbsPackageType {
+enum _CbsPackageType : LONG {
 	CbsPackageTypeUnknown = -2,
 	CbsPackageTypeExisting = -1,
 	CbsPackageTypeCabinet = 0,
@@ -43,12 +43,12 @@ enum _CbsPackageType {
 	CbsPackageTypeExpandedWithMum = 4
 };
 
-enum _CbsRequiredAction {
+enum _CbsRequiredAction : DWORD {
 	CbsRequiredActionNone = 0,
 	CbsRequiredActionReboot = 1
 };
 
-enum _CbsSessionProperty {
+enum _CbsSessionProperty : DWORD {
 	CbsSessionPropertyRebootRequired = 1,
 	CbsSessionPropertyErrorDetail = 2,
 	CbsSessionPropertyServiceable = 3,
@@ -90,7 +90,7 @@ enum _CbsSessionEnhancedOption : DWORD {
 	CbsSessionEnhancedOptionManuallyRepair = 0x800
 };
 
-enum _CbsSessionState {
+enum _CbsSessionState : LONG {
 	CbsSessionStateUnknown = 0,
 	CbsSessionStateReady = 16,
 	CbsSessionStateQueued = 32,
@@ -111,7 +111,7 @@ enum _CbsSessionState {
 };
 
 
-enum _CbsOperationType {
+enum _CbsOperationType : LONG {
 	CbsOperationTypeNone = 0,
 	CbsOperationTypeExportRepository = 1,
 	CbsOperationTypeUpdateImage = 2,
@@ -120,24 +120,25 @@ enum _CbsOperationType {
 	CbsOperationTypeInitICSIStore = 8
 };
 
-enum _CbsSessionConfigurableProperty {
+enum _CbsSessionConfigurableProperty : LONG {
 
 };
 
-enum _CbsApplicability {
+enum _CbsApplicability : LONG {
 	CbsApplicabilityInvalidValue = -1,
 	CbsApplicabilityNotApplicable = 0,
 	CbsApplicabilityNeedsParent = 2,
 	CbsApplicabilityApplicable = 4
 };
 
-enum _CbsSelectability {
+enum _CbsSelectability : LONG {
 	CbsSelectabilityInvalidValue = -1,
 	CbsSelectabilityClass1 = 1,
 	CbsSelectabilityClass2 = 2
 };
 
-enum _CbsInstallState {
+
+enum _CbsInstallState : LONG {
 	CbsInstallStatePartiallyInstalled = -19,
 	CbsInstallStateCancel = -18,
 	CbsInstallStateSuperseded = -17,
@@ -160,7 +161,7 @@ enum _CbsInstallState {
 	CbsInstallStatePermanent = 8,
 };
 
-enum _CbsPackageProperty {
+enum _CbsPackageProperty : DWORD {
 	CbsPackagePropertyIdentityString = 1,
 	CbsPackagePropertyDisplayName = 2,
 	CbsPackagePropertyDescription = 3,
@@ -210,15 +211,15 @@ enum _CbsPackageProperty {
 	CbsPackagePropertyRemoveOnReset = 51
 };
 
-enum _CbsResourceType {
+enum _CbsResourceType : DWORD {
 
 };
 
-enum _CbsCardinality {
+enum _CbsCardinality : DWORD {
 
 };
 
-enum _CbsUpdateProperty {
+enum _CbsUpdateProperty : DWORD {
 	CbsUpdatePropertyName = 1,
 	CbsUpdatePropertyDisplayName = 2,
 	CbsUpdatePropertyDescription = 3,
@@ -237,11 +238,11 @@ enum tagCBS_PACKAGE_ENCRYPTION_ENUM {
 
 };
 
-enum _CbsPackageChangeOption {
+enum _CbsPackageChangeOption : DWORD {
 	CbsTreatPackageAsPSFX = 1 << 15
 };
 
-enum _CbsOperationStage {
+enum _CbsOperationStage : DWORD {
 	CbsOperationStageWaiting = 1,
 	CbsOperationStagePlanning = 5,
 	CbsOperationStageDownloading = 15,
@@ -253,7 +254,7 @@ enum _CbsOperationStage {
 	CbsOperationStageReservicingLCU = 60
 };
 
-enum _CbsCapabilitySourceFilter {
+enum _CbsCapabilitySourceFilter : DWORD {
 	CbsOnDemandSourceActionList = 0x10,
 	CbsOnDemandSourceWindowsUpdate = 0x100,
 	CbsOnDemandSourceRemovedMarkers = 0x1000,
