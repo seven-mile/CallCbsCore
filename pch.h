@@ -9,11 +9,8 @@
 #include <Windows.h>
 #include <tchar.h>
 #include <comdef.h>
-//#include <Shlwapi.h>
 
 #include "helper.h"
-
-//#pragma comment(lib, "Shlwapi.lib")
 
 #include "CbsApi.h"
 #include "CbsRef.h"

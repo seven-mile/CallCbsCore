@@ -159,6 +159,8 @@ enum _CbsInstallState : LONG {
 	CbsInstallStateInstallRequested = 6,
 	CbsInstallStateInstalled = 7,
 	CbsInstallStatePermanent = 8,
+
+	CbsInstallStateInvalid = 0x7fffffff
 };
 
 enum _CbsPackageProperty : DWORD {
@@ -255,10 +257,13 @@ enum _CbsOperationStage : DWORD {
 };
 
 enum _CbsCapabilitySourceFilter : DWORD {
+	CbsOnDemandSourceEnumAllowCloud = 0x4,
+	CbsOnDemandSourceEnumTreatLocalSourceAsUUPRepo = 0x22,
+	CbsOnDemandSourceEnumReserveUnavailableFOD = 0x26,
+	CbsOnDemandSourceLanguagePack = 0x40,
 	CbsOnDemandSourceActionList = 0x10,
 	CbsOnDemandSourceWindowsUpdate = 0x100,
 	CbsOnDemandSourceRemovedMarkers = 0x1000,
-
 };
 
 #pragma endregion
@@ -524,7 +529,7 @@ struct ICbsSession : IUnknown {
 	virtual HRESULT STDMETHODCALLTYPE RegisterCbsUIHandler(_In_ ICbsUIHandler* pUIHandler) = 0;
 	virtual HRESULT STDMETHODCALLTYPE CreateWindowsUpdatePackage(_In_ UINT, _In_ LPCTSTR, _In_ GUID, _In_ UINT, _In_ _CbsPackageType, _In_ LPCTSTR, _In_ LPCTSTR, _In_ UINT, _Out_ tagCbsPackageDecryptionData* const, _In_ tagCBS_PACKAGE_ENCRYPTION_ENUM, _Out_ ICbsPackage**) = 0;
 	// sourceFilter: \in 0xFF, 0x40 means LanguagePacks
-	virtual HRESULT STDMETHODCALLTYPE EnumerateCapabilities(_In_ UINT sourceFilter, _In_ LPCTSTR, _In_ LPCTSTR, _In_ LPCTSTR, _In_ ULONG, _In_ ULONG, _Out_ IEnumCbsCapability**) = 0;
+	virtual HRESULT STDMETHODCALLTYPE EnumerateCapabilities(_In_ UINT sourceFilter, _In_z_ LPCTSTR szNamespace, _In_z_ LPCTSTR szLang, _In_ LPCTSTR szArch, _In_ ULONG dwMajor, _In_ ULONG dwMinor, _Out_ IEnumCbsCapability**) = 0;
 	virtual HRESULT STDMETHODCALLTYPE InitializeEx(_In_ UINT sessionOptions, _In_ LPCTSTR sourceName, _In_ LPCTSTR bootDrive, _In_ LPCTSTR winDir, _In_ LPCTSTR externalDir) = 0;
 	virtual HRESULT STDMETHODCALLTYPE CreateExternalTransformerExecutor(_Out_ struct ICSIExternalTransformerExecutor** ppCsiExecutor) = 0;
 	virtual HRESULT STDMETHODCALLTYPE ObserveSessions(_In_ UINT options, _In_ struct ICbsSessionObserverListener* pListener, _Out_ struct IEnumCbsSession**) = 0;

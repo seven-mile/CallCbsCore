@@ -12,68 +12,40 @@ HRESULT RunApplication()
 	CHECK(pCbsSession->RegisterCbsUIHandler(pUiHandler),
 		"Failed to register ICbsUIHandler into current session.");
 
-	ComPtr<ICbsPackage> pPkg;
-	CHECK(pCbsSession->CreatePackage(NULL, CbsPackageTypeCabinet,
-		_T("C:\\Users\\HigHwind\\Desktop\\tmp\\cab\\nt10\\windows10.0-kb3186578-x86_fffce1ba07ca03ebd00979ed5fa1c604a541d6fa.cab"),
-		_T("C:\\Users\\HigHwind\\Desktop\\tmp\\cbstemp\\sandbox"), &pPkg),
-		"Failed to create package from cabinet file.");
+	ComPtr<IEnumCbsCapability> pEnumCapa;
+	CHECK(pCbsSession->EnumerateCapabilities(
+		CbsOnDemandSourceEnumAllowCloud,
+		L"Accessibility.Braille",
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		&pEnumCapa),
+		"Failed to enum capabilities from session.");
 
+	for (auto& pCapa : GetIEnumVector<ICbsCapability, IEnumCbsCapability>(pEnumCapa))
 	{
-		LPTSTR szProp;
-		CHECK(pPkg->GetProperty(CbsPackagePropertyIdentityString, &szProp),
-			"Failed to get identity string for the cab package.");
-		_tprintf(_T("Pack: %s\n"), szProp);
+		LPTSTR szNamespace, szArch, szLang;
+		ULONG dwMajor, dwMinor;
+		
+		CHECK(pCapa->GetCapability(&szNamespace, &szLang, &szArch, &dwMajor, &dwMinor),
+			"Failed to get capability info.");
 
-		CHECK(pPkg->GetProperty(CbsPackagePropertyDescription, &szProp),
-			"Failed to get description for the cab package.");
-		_tprintf(_T("\t%s\n"), szProp);
+		_CbsInstallState appl = CbsInstallStateInvalid, ins = CbsInstallStateInvalid;
+		CHECK(pCapa->EvaluateApplicability(NULL, &appl, &ins), "Failed to get capability status.");
+		LPTSTR szStatus;
+		CHECK(TextizeCbsInstallState(ins, &szStatus), "Failed to textize status.");
 
-		CHECK(pPkg->GetProperty(CbsPackagePropertyReleaseType, &szProp),
-			"Failed to get release type for the cab package.");
-		_tprintf(_T("\t%s"), szProp);
+		ULONG cntDlBytes;
+		CHECK(pCapa->GetDownloadSize(&cntDlBytes), "Failed to get download size in bytes");
 
-		CHECK(pPkg->GetProperty(CbsPackagePropertySupportInformation, &szProp),
-			"Failed to get support info for the cab package.");
-		_tprintf(_T("\t%s\n"), szProp);
+		_tprintf(_T("%s.%s %lu.%lu\n\tDownload Size: %.2f MiB\nStatus: %s\n"),
+			szNamespace, szLang, dwMajor, dwMinor, cntDlBytes/1024.0/1024, szStatus);
 
-		CHECK(pPkg->GetProperty(CbsPackagePropertyKeyword, &szProp),
-			"Failed to get release type for the cab package.");
-		_tprintf(_T("\t%s\n"), szProp);
-	}
+		system("pause");
 
-	_CbsInstallState appl, curr;
-	CHECK(pPkg->EvaluateApplicability(NULL, &appl, &curr),
-		"Failed to evaluate applicability for the cab package.");
-
-	LPTSTR szApplState, szCurrState;
-	TextizeCbsInstallState(appl, &szApplState);
-	TextizeCbsInstallState(curr, &szCurrState);
-
-	_tprintf(_T("Applicable State: %s Current State: %s.\n"), szApplState, szCurrState);
-
-	// Install package (the operation will be append to the PoQ)
-	//CHECK(pPkg->InitiateChanges(NULL, CbsInstallStateInstalled, pUiHandler),
-	//	"Failed to initiate a installing change for the cab package.");
-
-	ComPtr<IEnumCbsUpdate> pUpdEnum;
-	CHECK(pPkg->EnumerateUpdates(CbsApplicabilityNotApplicable,
-		CbsSelectabilityClass1, &pUpdEnum),
-		"Failed to enumerate updates from package.");
-
-	InsertLine(LineSizeLong);
-
-	for (auto pUpd : GetIEnumVector<ICbsUpdate, IEnumCbsUpdate>(pUpdEnum))
-	{
-		LPTSTR szProp = NULL;
-		CHECK(pUpd->GetProperty(CbsUpdatePropertyDisplayName, &szProp),
-			"Failed to get display name for update.");
-		_tprintf(_T("Detect update: %s\n"), szProp);
-
-		CHECK(pUpd->GetProperty(CbsUpdatePropertyName, &szProp),
-			"Failed to get alias name for update.");
-		_tprintf(_T("\t{Alias - %s}\n"), szProp);
-
-		InsertLine(LineSizeLong);
+		// will meet network problem unexpectedly...
+		CHECK(pCapa->InitiateChanges(NULL, appl, pUiHandler), "Failed to init a change for this capa.");
 	}
 
 	return S_OK;
@@ -99,8 +71,8 @@ int main()
 
 	// You can open an online session when you have access to TrustedInstaller using function OpenOnlineSession
 	// Specify the path to a offline windows image. For example: L"D:\\", L"D:\\Windows".
-	CHECK(OpenOnlineSession(/*_T("E:\\MyCache\\Vx"), _T("E:\\MyCache\\Vx\\Windows"), */CbsSessionOptionNone),
-		"Failed to open an session for CBS operation.");
+	CHECK(OpenOnlineSession(CbsSessionOptionNone),
+		"Failed to open a session for CBS operation.");
 
 	CHECK(RunApplication(), "User-defined operations have NOT been performed fully.");
 

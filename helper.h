@@ -22,6 +22,7 @@ constexpr auto CBS_LOG_FILE = _T("C:\\Users\\HigHwind\\Desktop\\tmp\\cbstemp\\NB
 
 template <class T>
 constexpr size_t STR_LEN(const T * str) {
+
 	size_t ret(0);
 	for (const T* p = str; *p; p++, ret++);
 	return ret;
@@ -44,4 +45,4 @@ constexpr const T* CONCAT_STR(const T * str1, const T * str2)
 
 // Disable Warnings
 
-#pragma warning(disable: 6031 6385 6386 6054 26812)
+#pragma warning(disable: 6031 6385 6386 6387 6054 26812)
