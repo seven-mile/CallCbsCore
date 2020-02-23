@@ -69,3 +69,5 @@ template <class T, class IEnumT> std::vector<ComPtr<T>> GetIEnumVector(ComPtr<IE
 
 	return v;
 }
+
+HRESULT PrintPackageInfo(ComPtr<ICbsPackage> pPkg, bool bIns = true);

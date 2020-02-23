@@ -29,17 +29,17 @@ ULONG STDMETHODCALLTYPE CCbsUIHandlerImpl::Release(void)
 
 HRESULT STDMETHODCALLTYPE CCbsUIHandlerImpl::Initiate(IEnumCbsUpdate* pUpds, int* pUnk)
 {
-	_tprintf(_T("Init: pUpds = %p\n"), pUpds);
+	_tprintf(_T("(%hs) Init: pUpds = %p\n"), m_name.c_str(), pUpds);
 	return S_OK;
 }
 HRESULT STDMETHODCALLTYPE CCbsUIHandlerImpl::Terminate(void)
 {
-	_tprintf(_T("Term: Operation(s) completed.\n"));
+	_tprintf(_T("(%hs) Term: Operation(s) completed.\n"), m_name.c_str());
 	return S_OK;
 }
 HRESULT STDMETHODCALLTYPE CCbsUIHandlerImpl::Error(HRESULT hre, LPCTSTR szUnk, int* pUnk)
 {
-	_tprintf(_T("Error: HRESULT: %x, %s\n"), hre, szUnk);
+	_tprintf(_T("(%hs) Error: HRESULT: %x, %s\n"), m_name.c_str(), hre, szUnk);
 	return S_OK;
 }
 HRESULT STDMETHODCALLTYPE CCbsUIHandlerImpl::ResolveSource(LPCTSTR szUnk1, ICbsIdentity* pIdent, LPCTSTR szUnk2, LPTSTR* pszUnk, int* pUnk)
@@ -52,7 +52,7 @@ HRESULT STDMETHODCALLTYPE CCbsUIHandlerImpl::Progress(_CbsInstallState insSt, UI
 
 	LPTSTR strp;
 	CHECK(TextizeCbsInstallState(insSt, &strp), "Failed to textize _CbsInstallState.");
-	_tprintf(_T("Prog: State = %s, %.1f%% completed.\n"), strp, 100.0 * curProg / totProg);
+	_tprintf(_T("(%hs) Prog: State = %s, %.1f%% completed.\n"), m_name.c_str(), strp, 100.0 * curProg / totProg);
 	return S_OK;
 }
 HRESULT STDMETHODCALLTYPE CCbsUIHandlerImpl::EnteringStage(UINT unk1, _CbsOperationStage opSg, int unk2, int unk3)
@@ -65,11 +65,18 @@ HRESULT STDMETHODCALLTYPE CCbsUIHandlerImpl::ProgressEx(_CbsInstallState insSt, 
 
 	LPTSTR strp;
 	CHECK(TextizeCbsInstallState(insSt, &strp), "Failed to textize _CbsInstallState.");
-	_tprintf(_T("ProgEx: State = %s, %.1f%% completed.\n"), strp, 100.0 * curProg / totProg);
+	_tprintf(_T("(%hs) ProgEx: State = %s, %.1f%% completed.\n"), m_name.c_str(), strp, 100.0 * curProg / totProg);
 	return S_OK;
 }
 
-CCbsUIHandlerImpl::CCbsUIHandlerImpl()
+CCbsUIHandlerImpl::CCbsUIHandlerImpl(std::string name)
 {
 	m_dwRef = 0;
+
+	static size_t nAllocId = 0;
+
+	if (name == "__und__")
+		name = "UIHandler" + NUM_TO_STR(nAllocId++);
+	
+	m_name = name;
 }

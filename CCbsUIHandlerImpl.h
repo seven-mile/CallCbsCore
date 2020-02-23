@@ -5,6 +5,7 @@ class CCbsUIHandlerImpl :
 {
 private:
 	ULONG m_dwRef = 0;
+	std::string m_name; // used to display info source
 
 public:
 	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, LPVOID* ppvObject) override;
@@ -19,7 +20,7 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE EnteringStage(UINT, enum _CbsOperationStage, int, int) override;
 	virtual HRESULT STDMETHODCALLTYPE ProgressEx(_CbsInstallState, UINT, UINT, UINT, int*) override;
 
-	CCbsUIHandlerImpl();
+	CCbsUIHandlerImpl(std::string name = "__und__");
 	virtual ~CCbsUIHandlerImpl() = default;
 };
 

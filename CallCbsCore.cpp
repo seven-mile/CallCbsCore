@@ -8,45 +8,34 @@ HRESULT RunApplication()
 	// todo: do your own work
 
 	// A callback handler interface implemented by user
-	ComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl;
-	CHECK(pCbsSession->RegisterCbsUIHandler(pUiHandler),
-		"Failed to register ICbsUIHandler into current session.");
+	ComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl("PkgInstaller");
+	// CHECK(pCbsSession->RegisterCbsUIHandler(pUiHandler),
+	//	"Failed to register ICbsUIHandler into current session.");
 
-	ComPtr<IEnumCbsCapability> pEnumCapa;
-	CHECK(pCbsSession->EnumerateCapabilities(
-		CbsOnDemandSourceEnumAllowCloud,
-		L"Accessibility.Braille",
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		&pEnumCapa),
-		"Failed to enum capabilities from session.");
+	ComPtr<ICbsPackage> pPkg;
 
-	for (auto& pCapa : GetIEnumVector<ICbsCapability, IEnumCbsCapability>(pEnumCapa))
-	{
-		LPTSTR szNamespace, szArch, szLang;
-		ULONG dwMajor, dwMinor;
-		
-		CHECK(pCapa->GetCapability(&szNamespace, &szLang, &szArch, &dwMajor, &dwMinor),
-			"Failed to get capability info.");
+	CHECK(pCbsSession->CreatePackage(NULL, CbsPackageTypeCabinet,
+		_T("C:\\Users\\HigHwind\\Desktop\\tmp\\cab\\nt10\\Windows10.0-KB4517245-x64.cab"),
+		_T("C:\\Users\\HigHwind\\Desktop\\tmp\\cbstemp\\sandbox"),
+		&pPkg), "Failed to create package from cab file.");
 
-		_CbsInstallState appl = CbsInstallStateInvalid, ins = CbsInstallStateInvalid;
-		CHECK(pCapa->EvaluateApplicability(NULL, &appl, &ins), "Failed to get capability status.");
-		LPTSTR szStatus;
-		CHECK(TextizeCbsInstallState(ins, &szStatus), "Failed to textize status.");
+	_CbsInstallState stCur, stApp;
+	CHECK(pPkg->EvaluateApplicability(NULL, &stApp, &stCur), "Failed to evaluate the package, maybe it's invalid.");
 
-		ULONG cntDlBytes;
-		CHECK(pCapa->GetDownloadSize(&cntDlBytes), "Failed to get download size in bytes");
-
-		_tprintf(_T("%s.%s %lu.%lu\n\tDownload Size: %.2f MiB\nStatus: %s\n"),
-			szNamespace, szLang, dwMajor, dwMinor, cntDlBytes/1024.0/1024, szStatus);
-
-		system("pause");
-
-		// will meet network problem unexpectedly...
-		CHECK(pCapa->InitiateChanges(NULL, appl, pUiHandler), "Failed to init a change for this capa.");
+	if (stCur == CbsInstallStateInstalled) {
+		WdsLogHrInternalA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "You have installed this package! The program is to exit.");
+		return S_OK;
 	}
+	
+	if (stApp != CbsInstallStateInstalled)
+		RET_HR_LOG(E_NOT_VALID_STATE, "The package is not applicable for your OS.");
+
+	CHECK(PrintPackageInfo(pPkg, stCur == CbsInstallStateInstalled), "Failed to print package info.");
+
+	WdsLogHrInternalA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "Ready. The package is to be installed.");
+
+	// Guaranteed success
+	pPkg->InitiateChanges(NULL, CbsInstallStateInstalled, pUiHandler);
 
 	return S_OK;
 }
@@ -61,7 +50,8 @@ int main()
 	setlocale(LC_ALL, "");
 
 	// The env var of app is used to config CBS's logging setting.
-	SetEnvironmentVariable(_T("COMPONENT_BASED_SERVICING_LOGFILE"), CBS_LOG_FILE);
+	g_conf.SetLogFile(CBS_LOG_FILE);
+	g_conf.SetLogOutput(true);
 
 	CHECK(FindStackByReg(), "Failed to find stack by read registry.");
 	CHECK(LoadCbsCore(), "Failed to load cbscore.dll library.");
@@ -70,7 +60,7 @@ int main()
 	CHECK(LoadWdsCore(), "Failed to catch wdscore.dll, logging of the application in file won't be initialized.");
 
 	// You can open an online session when you have access to TrustedInstaller using function OpenOnlineSession
-	// Specify the path to a offline windows image. For example: L"D:\\", L"D:\\Windows".
+	// Specify the path to a offline windows image. For example: _T("D:\\"), _T("D:\\Windows").
 	CHECK(OpenOnlineSession(CbsSessionOptionNone),
 		"Failed to open a session for CBS operation.");
 

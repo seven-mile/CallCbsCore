@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <sstream>
+
 // Typedefs
 
 template<class Interface>
@@ -8,7 +11,7 @@ using ComPtr = _com_ptr_t<_com_IIID<Interface, nullptr>>;
 // Exception handling helper functions
 
 #define BEGIN_ERROR_HANDLING() HRESULT hr = (S_OK)
-#define WdsLogWithHrTextA(_hr, ...) WdsLogHrInternalA(_hr,##__VA_ARGS__,_hr,TextizeHresultA(_hr))
+#define WdsLogWithHrTextA(_hr,sc,lv, ...) WdsLogHrInternalA(_hr,sc,lv,##__VA_ARGS__,_hr,TextizeHresultA(_hr))
 #define CHECK(x, y, ...) if(FAILED(hr = (x))) return WdsLogWithHrTextA(hr,WdsLogSourceUI,WdsLogLevelError,y,##__VA_ARGS__),hr
 #define RET_HR_LOG(_hr, _fmt, ...) return WdsLogWithHrTextA(_hr,WdsLogSourceUI,WdsLogLevelError,_fmt,##__VA_ARGS__),(_hr)
 #define RET_WIN32ERR_LOG(_dwErr, _fmt, ...) RET_HR_LOG(HRESULT_FROM_WIN32(_dwErr),_fmt,##__VA_ARGS__)
@@ -41,6 +44,32 @@ constexpr const T* CONCAT_STR(const T * str1, const T * str2)
 	str[sz1 + sz2] = '\0';
 
 	return str;
+}
+
+template <class TNum>
+inline std::string NUM_TO_STR(TNum n) {
+	static std::stringstream ss;
+	ss << n;
+	std::string ret;
+	ss >> ret;
+	ss.clear();
+	return ret;
+}
+
+inline int64_t STR_TO_NUM(const std::string &s) {
+	static std::stringstream ss;
+	ss << s;
+	int64_t n;
+	ss >> n;
+	return n;
+}
+
+inline int64_t STR_TO_NUM(const std::wstring& s) {
+	static std::wstringstream ss;
+	ss << s;
+	int64_t n;
+	ss >> n;
+	return n;
 }
 
 // Disable Warnings

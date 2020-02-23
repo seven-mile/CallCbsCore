@@ -4,7 +4,7 @@ HRESULT WdsLogA(HRESULT hr, WdsLogSource source, WdsLogLevel level, const char* 
 {
 	va_list va;
 
-	if (!vpfnWdsSetupLogMessageA)
+	if (!vpfnWdsSetupLogMessageA || g_conf.GetLogOutput())
 	{
 		CHAR szBuffer[255]{};
 		va_start(va, fmt);
@@ -36,7 +36,7 @@ HRESULT WdsLogHrInternalA(HRESULT hr, WdsLogSource source, WdsLogLevel level, co
 
 	fmt = CONCAT_STR<CHAR>(fmt, " HRESULT - 0x%x - %s");
 
-	if (!vpfnWdsSetupLogMessageA)
+	if (!vpfnWdsSetupLogMessageA || g_conf.GetLogOutput())
 	{
 		CHAR szBuffer[255]{};
 		va_start(va, fmt);
@@ -1519,4 +1519,44 @@ void InsertLine(UINT uSize)
 		_puttchar(_T('='));
 	}
 	_puttchar(_T('\n'));
+}
+
+HRESULT PrintPackageInfo(ComPtr<ICbsPackage> pPkg, bool bIns)
+{
+	BEGIN_ERROR_HANDLING();
+
+	if (!pPkg) RET_HR_LOG(E_INVALIDARG, "The pointer to the pkg is invalid.");
+
+#define GPkgProp(x, y) CHECK(pPkg->GetProperty(CbsPackageProperty##x, &(y)), "OK")
+
+	InsertLine(LineSizeLong);
+
+
+	LPTSTR szName, szDesc, szIdent, szReType, szSize, szSup;
+	GPkgProp(DisplayName, szName);
+	GPkgProp(Description, szDesc);
+	GPkgProp(IdentityString, szIdent);
+	GPkgProp(ReleaseType, szReType);
+	GPkgProp(PackageSize, szSize);
+	GPkgProp(SupportInformation, szSup);
+
+	_tprintf(L"Name: %s\n", szName);
+	_tprintf(L"Description: %s\n", szDesc);
+	_tprintf(L"Identity: %s\n", szIdent);
+	_tprintf(L"Release Type: %s\n", szReType);
+	_tprintf(L"Pkg Size: %s Bytes\n", szSize);
+	_tprintf(L"Support URL: %s\n", szSup);
+
+	if (bIns) {
+		InsertLine(LineSizeMedium);
+		LPTSTR szInsTime;
+		GPkgProp(InstallTimeStamp, szInsTime);
+		auto tm = WindowsTimeStamp2SystemTime(STR_TO_NUM(szInsTime));
+		_tprintf(L"Install time: %04hu/%02hu/%02hu %02hu:%02hu:%02hu\n", tm.wYear, tm.wMonth, tm.wDay, tm.wHour, tm.wMinute, tm.wSecond);
+	}
+
+	InsertLine(LineSizeLong);
+
+	return S_OK;
+#undef GPkgProp
 }

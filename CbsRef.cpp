@@ -250,6 +250,9 @@ HRESULT CloseSessionAndFinalizeCbsCore()
 	_CbsRequiredAction ra;
 	CHECK(pCbsSession->FinalizeEx(NULL, &ra), "Failed to finalize cbs session.");
 
+	if (ra == CbsRequiredActionReboot)
+		WdsLogHrInternalA(S_OK, WdsLogSourceUI, WdsLogLevelWarning, "You may need to restart your computer to apply these changes.");
+
 	pCbsSession->Release();
 	pSxSFactory->Release();
 	pCbsCoreFactory->Release();
