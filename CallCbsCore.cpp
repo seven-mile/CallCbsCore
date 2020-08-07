@@ -1,79 +1,144 @@
 ﻿#include "pch.h"
 #include "CCbsUIHandlerImpl.h"
 
-HRESULT RunApplication()
+HRESULT DoTask_InstallPackage()
 {
-	BEGIN_ERROR_HANDLING();
+  BEGIN_ERROR_HANDLING();
 
-	// todo: do your own work
+  CHECK(g_mgr.GetNewSess(), "Failed to get a new session.");
 
-	// A callback handler interface implemented by user
-	ComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl("PkgInstaller");
-	// CHECK(pCbsSession->RegisterCbsUIHandler(pUiHandler),
-	//	"Failed to register ICbsUIHandler into current session.");
+  // todo: do your own work
 
-	ComPtr<ICbsPackage> pPkg;
+  // A callback handler interface implemented by user
+  ComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl("PkgInstaller");
+  // CHECK(g_sess->RegisterCbsUIHandler(pUiHandler),
+  //	"Failed to register ICbsUIHandler into current session.");
 
-	CHECK(pCbsSession->CreatePackage(NULL, CbsPackageTypeCabinet,
-		_T("C:\\Users\\HigHwind\\Desktop\\tmp\\cab\\nt10\\Windows10.0-KB4517245-x64.cab"),
-		_T("C:\\Users\\HigHwind\\Desktop\\tmp\\cbstemp\\sandbox"),
-		&pPkg), "Failed to create package from cab file.");
+  ComPtr<ICbsPackage> pPkg;
 
-	_CbsInstallState stCur, stApp;
-	CHECK(pPkg->EvaluateApplicability(NULL, &stApp, &stCur), "Failed to evaluate the package, maybe it's invalid.");
+  CHECK(g_sess->CreatePackage(0, CbsPackageTypeCabinet,
+    _T("C:\\Users\\HigHwind\\Desktop\\tmp\\cab\\nt10\\Windows10.0-KB4517245-x64.cab"),
+    _T("C:\\Users\\HigHwind\\Desktop\\tmp\\cbstemp\\sandbox"),
+    &pPkg), "Failed to create package from cab file.");
 
-	if (stCur == CbsInstallStateInstalled) {
-		WdsLogHrInternalA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "You have installed this package! The program is to exit.");
-		return S_OK;
-	}
-	
-	if (stApp != CbsInstallStateInstalled)
-		RET_HR_LOG(E_NOT_VALID_STATE, "The package is not applicable for your OS.");
+  _CbsInstallState stCur, stApp;
+  CHECK(pPkg->EvaluateApplicability(0, &stApp, &stCur), "Failed to evaluate the package, maybe it's invalid.");
 
-	CHECK(PrintPackageInfo(pPkg, stCur == CbsInstallStateInstalled), "Failed to print package info.");
+  if (stCur == CbsInstallStateInstalled) {
+    LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "You have installed this package! The program is to exit.");
+    return S_OK;
+  }
 
-	WdsLogHrInternalA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "Ready. The package is to be installed.");
+  if (stApp != CbsInstallStateInstalled)
+    RET_HR_LOG(E_NOT_VALID_STATE, "The package is not applicable for your OS.");
 
-	// Guaranteed success
-	pPkg->InitiateChanges(NULL, CbsInstallStateInstalled, pUiHandler);
+  CHECK(PrintPackageInfo(pPkg, stCur == CbsInstallStateInstalled), "Failed to print package info.");
 
-	return S_OK;
+  LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "Ready. The package is to be installed.");
+
+  // Guaranteed success
+  pPkg->InitiateChanges(0, CbsInstallStateInstalled, pUiHandler);
+
+  CHECK(g_mgr.SubmitSess(), "Failed to submit the changes in the session.");
+
+  return S_OK;
+}
+
+HRESULT DoTask_EnumeratePkgs()
+{
+  BEGIN_ERROR_HANDLING();
+
+  CHECK(g_mgr.GetNewSess(), "Failed to get a new session.");
+
+  ComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl("PkgLister");
+  ComPtr<IEnumCbsIdentity> pIdents;
+  CHECK(g_sess->EnumeratePackages(0x1b0, &pIdents), "Failed to enum pkgs.");
+
+  for (auto& x : GetIEnumVector<ICbsIdentity, IEnumCbsIdentity>(pIdents)) {
+    ComPtr<ICbsPackage> pPkg;
+    CHECK(g_sess->OpenPackage(0, x, nullptr, &pPkg), "Failed to open pkg with identity.");
+    CHECK(PrintPackageInfo(pPkg), "Failed to print package info.");
+  }
+
+  CHECK(g_mgr.SubmitSess(), "Failed to submit the changes in the session.");
+
+  return S_OK;
+}
+
+HRESULT DoTask_EnableHyperV()
+{
+  BEGIN_ERROR_HANDLING();
+
+  CHECK(g_mgr.GetNewSess(), "Failed to get a new session.");
+
+  ComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl("Hyper-V Enabler");
+
+  auto pFound = GetFoundationPackage();
+  assert(pFound);
+
+  PrintPackageInfo(pFound);
+
+  ComPtr<ICbsUpdate> pUpd;
+  CHECK(pFound->GetUpdate(L"Microsoft-Windows-HyperV-OptionalFeature-HypervisorPlatform-Disabled-Package", &pUpd), "..");
+
+  pUpd->SetInstallState(0, CbsInstallStateInstalled);
+
+  pFound->InitiateChanges(0, CbsInstallStateInstalled, pUiHandler);
+
+  /*ComPtr<IEnumCbsUpdate> pUpds;
+  CHECK(pFound->EnumerateUpdates(CbsApplicabilityApplicable, CbsSelectabilityClass1, &pUpds),
+    "Failed to enumerate updates from foundation package.");
+
+  for (auto& pUpd : GetIEnumVector<ICbsUpdate, IEnumCbsUpdate>(pUpds))
+    PrintUpdateInfo(pUpd);*/
+
+  CHECK(g_mgr.SubmitSess(), "Failed to submit the changes in the session.");
+
+  return S_OK;
 }
 
 int main()
 {
-	BEGIN_ERROR_HANDLING();
+  BEGIN_ERROR_HANDLING();
 
-	CHECK(CoInitialize(NULL), "Failed to initialize COM.");
-	
-	// I18n console host
-	setlocale(LC_ALL, "");
+  g_conf.output_log = true;
+  CHECK(CheckSudoSelf(), "Failed to check permission and sudo self.");
 
-	// The env var of app is used to config CBS's logging setting.
-	g_conf.SetLogFile(CBS_LOG_FILE);
-	g_conf.SetLogOutput(true);
+  if (hr == S_ASYNCHRONOUS)
+  {
+    printf("OK, preparing to restart and sudo...\n");
+    return 0;
+  }
 
-	CHECK(FindStackByReg(), "Failed to find stack by read registry.");
-	CHECK(LoadCbsCore(), "Failed to load cbscore.dll library.");
-	CHECK(LoadSxSStore(), "Failed to load sxsstore.dll library.");
-	CHECK(InitCbsCoreAndSxSStore(), "Failed to create cbscore and sxsstore class factory.");
-	CHECK(LoadWdsCore(), "Failed to catch wdscore.dll, logging of the application in file won't be initialized.");
+  printf("OK, now we have TI permission.\n");
 
-	// You can open an online session when you have access to TrustedInstaller using function OpenOnlineSession
-	// Specify the path to a offline windows image. For example: _T("D:\\"), _T("D:\\Windows").
-	CHECK(OpenOnlineSession(CbsSessionOptionNone),
-		"Failed to open a session for CBS operation.");
+  CHECK(CoInitialize(nullptr), "Failed to initialize COM.");
 
-	CHECK(RunApplication(), "User-defined operations have NOT been performed fully.");
+  // I18n console host
+  setlocale(LC_ALL, "");
 
-	// Make the changes come into effects.
-	CHECK(CloseSessionAndFinalizeCbsCore(), "Failed to close current session or to finalize cbscore.");
+  // The env var of app is used to config CBS's logging setting.
+  //g_conf.SetLogFile(CBS_LOG_FILE);
+  g_conf.mode = CCbsConfig::SessMode::Online;
+  g_conf.stack_source = CCbsConfig::StackSource::Registry;
 
-	CoUninitialize();
+  CHECK(g_mgr.FindStack(), "Failed to find stack [StackSource = %s].",
+    GetEnumName(g_conf.stack_source));
+  CHECK(g_mgr.Load(), "Failed to automatically load stack.");
 
-	return S_OK;
+  LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "We are to execute the task!");
+  system("pause");
 
-#ifndef _DEBUG
-	system("pause");
-#endif
+  CHECK(DoTask_EnumeratePkgs(), "User-defined operations in the task have NOT been performed fully.");
+
+  LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "We are to dispose the manager.");
+  CHECK(g_mgr.Dispose(), "Failed to dispose StackManager.");
+
+  CoUninitialize();
+
+  LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "All resource cleared!");
+
+  getchar();
+
+  return S_OK;
 }
