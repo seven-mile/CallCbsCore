@@ -236,7 +236,7 @@ enum tagCbsPackageDecryptionData {
 
 };
 
-enum tagCBS_PACKAGE_ENCRYPTION_ENUM {
+enum tagCbsPackageEncryptionEnum {
 
 };
 
@@ -268,11 +268,11 @@ enum _CbsCapabilitySourceFilter : DWORD {
 
 #pragma endregion
 
-struct _SXS_STORE_INSTALL_SOURCE_INFO {
+struct SxSStoreInstallSourceInfo {
 
 };
 
-struct _SXS_STORE_INSTALL_REFERENCEW {
+struct SxSStoreInstallReferenceW {
 
 };
 
@@ -527,7 +527,7 @@ struct ICbsSession : IUnknown {
   // Session7 is here
   virtual HRESULT STDMETHODCALLTYPE AddSource(_In_ UINT options, _In_ LPCTSTR basePath) = 0;
   virtual HRESULT STDMETHODCALLTYPE RegisterCbsUIHandler(_In_ ICbsUIHandler* pUIHandler) = 0;
-  virtual HRESULT STDMETHODCALLTYPE CreateWindowsUpdatePackage(_In_ UINT, _In_ LPCTSTR, _In_ GUID, _In_ UINT, _In_ _CbsPackageType, _In_ LPCTSTR, _In_ LPCTSTR, _In_ UINT, _Out_ tagCbsPackageDecryptionData* const, _In_ tagCBS_PACKAGE_ENCRYPTION_ENUM, _Out_ ICbsPackage**) = 0;
+  virtual HRESULT STDMETHODCALLTYPE CreateWindowsUpdatePackage(_In_ UINT, _In_ LPCTSTR, _In_ GUID, _In_ UINT, _In_ _CbsPackageType, _In_ LPCTSTR, _In_ LPCTSTR, _In_ UINT, _Out_ tagCbsPackageDecryptionData* const, _In_ tagCbsPackageEncryptionEnum, _Out_ ICbsPackage**) = 0;
   // sourceFilter: \in 0xFF, 0x40 means LanguagePacks
   virtual HRESULT STDMETHODCALLTYPE EnumerateCapabilities(_In_ UINT sourceFilter, _In_z_ LPCTSTR szNamespace, _In_z_ LPCTSTR szLang, _In_ LPCTSTR szArch, _In_ ULONG dwMajor, _In_ ULONG dwMinor, _Out_ IEnumCbsCapability**) = 0;
   virtual HRESULT STDMETHODCALLTYPE InitializeEx(_In_ UINT sessionOptions, _In_ LPCTSTR sourceName, _In_ LPCTSTR bootDrive, _In_ LPCTSTR winDir, _In_ LPCTSTR externalDir) = 0;
@@ -578,40 +578,7 @@ struct ISxSStore : IUnknown {
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
   virtual HRESULT STDMETHODCALLTYPE BeginAssemblyInstall(ULONG) = 0;
-  virtual HRESULT STDMETHODCALLTYPE InstallAssembly(ULONG, _Out_ USHORT const*, _Out_ _SXS_STORE_INSTALL_SOURCE_INFO const*, _Out_ _SXS_STORE_INSTALL_REFERENCEW const*) = 0;
+  virtual HRESULT STDMETHODCALLTYPE InstallAssembly(ULONG, _Out_ USHORT const*, _Out_ SxSStoreInstallSourceInfo const*, _Out_ SxSStoreInstallReferenceW const*) = 0;
   virtual HRESULT STDMETHODCALLTYPE EndAssemblyInstall(ULONG, _Out_ ULONG*) = 0;
-  virtual HRESULT STDMETHODCALLTYPE UninstallAssembly(ULONG, _Out_ USHORT const*, _Out_ _SXS_STORE_INSTALL_REFERENCEW const*, _Out_ ULONG*) = 0;
+  virtual HRESULT STDMETHODCALLTYPE UninstallAssembly(ULONG, _Out_ USHORT const*, _Out_ SxSStoreInstallReferenceW const*, _Out_ ULONG*) = 0;
 };
-
-struct ICSITransaction : IUnknown {
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _Out_ LPVOID* ppvObject) override = 0;
-  virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
-  virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
-
-
-};
-
-struct ICSIRepairTransaction : ICSITransaction {
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _Out_ LPVOID* ppvObject) override = 0;
-  virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
-  virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
-
-};
-
-struct ICSIStore : IUnknown {
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _Out_ LPVOID* ppvObject) override = 0;
-  virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
-  virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
-
-  virtual HRESULT STDMETHODCALLTYPE BeginTransaction(ULONG, _GUID const&, LPCTSTR, _Out_ ICSITransaction**) = 0;
-  virtual HRESULT STDMETHODCALLTYPE CancelPendingTransaction(ULONG, _GUID const&, LPCTSTR, _Out_ ULONG*) = 0;
-  virtual HRESULT STDMETHODCALLTYPE BeginRepairTransaction(ULONG, _Out_ ICSIRepairTransaction**, _Out_ ULONG*) = 0;
-  virtual HRESULT STDMETHODCALLTYPE CancelPendingRepairTransaction(ULONG, _Out_ ULONG*) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetComponentManifests(ULONG, UINT64, IDefinitionIdentity**, _GUID const&, _Out_ IUnknown**) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetComponentInstalledVersions(ULONG, UINT64, _Out_ IDefinitionIdentity**, _Out_ ULONG* const, _Out_ struct _COMPONENT_VERSION* const) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetComponentInformation(ULONG, ULONG, IDefinitionIdentity*, UINT64, _Out_ void*) = 0;
-  virtual HRESULT STDMETHODCALLTYPE ReplaceMacros(ULONG, IDefinitionIdentity*, LPCTSTR, _Out_ LPTSTR*) = 0;
-  virtual HRESULT STDMETHODCALLTYPE EnumPendingTransactions(ULONG, _GUID const&, _Out_ IUnknown**) = 0;
-  virtual HRESULT STDMETHODCALLTYPE CancelPendingTransactions(ULONG, UINT64, _Out_ LPCTSTR const*, _Out_ ULONG*) = 0;
-};
-

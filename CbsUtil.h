@@ -58,13 +58,13 @@ void InsertLine(UINT uSize);
 #pragma region data conversion
 SYSTEMTIME WindowsTimeStamp2SystemTime(const UINT64& timeStamp);
 std::wstring ExpandEnvW(const std::wstring& str);
-const std::wstring TextizeHresult(HRESULT hr);
-const std::string TextizeHresultA(HRESULT hr);
+std::wstring TextizeHresult(HRESULT hr);
+std::string TextizeHresultA(HRESULT hr);
 #pragma endregion
 
 #pragma region CBS objects helper
 template <class T, class IEnumT>
-inline std::vector<ComPtr<T>> GetIEnumVector(ComPtr<IEnumT> pEnum)
+inline std::vector<ComPtr<T>> GetIEnumComPtrVector(ComPtr<IEnumT> pEnum)
 {
   std::vector<ComPtr<T>> v;
 
@@ -72,15 +72,31 @@ inline std::vector<ComPtr<T>> GetIEnumVector(ComPtr<IEnumT> pEnum)
 
   do {
     ComPtr<T> ptr;
-    pEnum->Next(1, (T**)&ptr, &k);
+    pEnum->Next(1, static_cast<T**>(&ptr), &k);
     if (ptr) v.push_back(ptr);
   } while (k);
 
   return v;
 }
+
+template <class T, class IEnumT>
+inline std::vector<T> GetIEnumStructVector(ComPtr<IEnumT> pEnum)
+{
+  std::vector<T> v;
+  ULONG *pk = new ULONG;
+
+  while (true) {
+    T ptr;
+    HRESULT hr = pEnum->Next(1, &ptr, pk);
+    if (*pk) v.push_back(ptr);
+    else break;
+  }
+
+  return v;
+}
 ComPtr<ICbsPackage> GetFoundationPackage();
-HRESULT PrintPackageInfo(ComPtr<ICbsPackage> pPkg, bool bIns = true);
-HRESULT PrintUpdateInfo(ComPtr<ICbsUpdate> pUpd);
+HRESULT PrintPackageInfo(const ComPtr<ICbsPackage>& pPkg, const bool bIns = true);
+HRESULT PrintUpdateInfo(const ComPtr<ICbsUpdate>& pUpd);
 #pragma endregion
 
 #pragma region permission

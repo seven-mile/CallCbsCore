@@ -765,7 +765,7 @@ LPCTSTR TextizeSetupHresult(HRESULT hr)
   return result;
 }
 
-const std::wstring TextizeHresult(HRESULT hr)
+std::wstring TextizeHresult(const HRESULT hr)
 {
   auto strhr = NUM_TO_WSTR(hr);
   LPCTSTR result = nullptr;
@@ -1469,7 +1469,7 @@ LPCSTR TextizeSetupHresultA(HRESULT hr)
   return result;
 }
 
-const std::string TextizeHresultA(HRESULT hr)
+std::string TextizeHresultA(const HRESULT hr)
 {
   auto strhr = NUM_TO_STR(hr);
   LPCSTR result = nullptr;
@@ -1485,7 +1485,7 @@ const std::string TextizeHresultA(HRESULT hr)
 
 
 
-void InsertLine(UINT uSize)
+void InsertLine(const UINT uSize)
 {
   for (UINT iCh = 0; iCh < uSize; iCh++)
   {
@@ -1503,7 +1503,7 @@ ComPtr<ICbsPackage> GetFoundationPackage()
   ComPtr<IEnumCbsIdentity> pIdents;
   CHECK(g_sess->EnumeratePackages(0x1b0, &pIdents), "Failed to enum pkgs.");
 
-  for (auto& pIdent : GetIEnumVector<ICbsIdentity, IEnumCbsIdentity>(pIdents)) {
+  for (auto& pIdent : GetIEnumComPtrVector<ICbsIdentity, IEnumCbsIdentity>(pIdents)) {
     ComPtr<ICbsPackage> pPkg;
     CHECK(g_sess->OpenPackage(0, pIdent, nullptr, &pPkg), "Failed to open pkg with identity.");
     LPTSTR strReleaseType;
@@ -1515,7 +1515,7 @@ ComPtr<ICbsPackage> GetFoundationPackage()
   return nullptr;
 }
 
-HRESULT PrintPackageInfo(ComPtr<ICbsPackage> pPkg, bool bIns)
+HRESULT PrintPackageInfo(const ComPtr<ICbsPackage>& pPkg, const bool bIns)
 {
   BEGIN_ERROR_HANDLING();
 
@@ -1565,7 +1565,7 @@ HRESULT PrintPackageInfo(ComPtr<ICbsPackage> pPkg, bool bIns)
 #undef GPkgProp
 }
 
-HRESULT PrintUpdateInfo(ComPtr<ICbsUpdate> pUpd)
+HRESULT PrintUpdateInfo(const ComPtr<ICbsUpdate>& pUpd)
 {
   BEGIN_ERROR_HANDLING();
 
