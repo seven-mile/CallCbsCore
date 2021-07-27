@@ -2,19 +2,34 @@
 #include "RegWrapper.hpp"
 #include "StackManager.h"
 
+#include "SSShimApi.h"
+
+#include <utility>
+#include <format>
+
+// cbscore.dll
 HRESULT(WINAPI* vpfnCbsCoreInitialize)(IMalloc*, int(WINAPI*)(int), void (*)(), void (*)(), void (*)(), void (*)(), void (*)(), IClassFactory**);
 HRESULT(WINAPI* vpfnCbsCoreSetState)(int state, PROC value);
 HRESULT(WINAPI* vpfnCbsCoreFinalize)();
 HRESULT(WINAPI* vpfnSetTestMode)(int mode);
 
+// sxsstore.dll
 HRESULT(WINAPI* vpfnSxsStoreInitialize)(IMalloc*, int(WINAPI*)(int), void (*)(), void (*)(), void (*)(), void (*)(), IClassFactory**);
 HRESULT(*vpfnSxsStoreFinalize)();
 
+// wdscore.dll
 HRESULT(WINAPI* vpfnWdsSetupLogMessageA)(LPVOID pMsg, enum WdsLogSource source, const char*, const char*, ULONG, const char* file, const char* func, void* CurIP, ULONG, void*, UINT);
 LPVOID(WINAPI* vpfnConstructPartialMsgVA)(WdsLogLevel level, const char* fmtMsg, va_list va);
 LPVOID(*vpfnCurrentIP)();
 
+// wcp.dll
 int(WINAPI* vpfnGetSystemStore)(UINT reserved, const struct _GUID&, struct IUnknown**);
+
+// ssshim.dll
+//HRESULT(*vpfnSssBindServicingStack)(_In_ _SSS_BIND_PARAMETERS *pInputParams, _Out_ _SSS_COOKIE *pCookie, int *pDisp);
+decltype(vpfnSssBindServicingStack) vpfnSssBindServicingStack;
+decltype(vpfnSssGetServicingStackFilePathLength) vpfnSssGetServicingStackFilePathLength;
+decltype(vpfnSssGetServicingStackFilePath) vpfnSssGetServicingStackFilePath;
 
 #pragma region GUID DEF
 const GUID CLSID_CbsSession = { 0x752073a1, 0x23F2, 0x4396, { 0x85, 0xF0, 0x8F, 0xDB, 0x87, 0x9E, 0xD0, 0xED } };
@@ -96,7 +111,66 @@ HRESULT StackManager::FindStackByPath(std::wstring path)
 }
 
 HRESULT StackManager::FindStackBySSShim(std::wstring path) {
-  return E_NOTIMPL;
+  BEGIN_ERROR_HANDLING();
+  
+  CHECK(LoadSSShim(), "Failed to Load SSShim Module, we can't find stack.");
+
+  _SSS_BIND_PARAMETERS param{};
+  param.cbSize = sizeof _SSS_BIND_PARAMETERS;
+  param.dwFlags = _SSS_BIND_CONDITION_FLAGS::ARCHITECTURE
+      | _SSS_BIND_CONDITION_FLAGS::OFFLINE_IMAGE;
+  _SSS_ARCHITECTURE arrArchs[] = {
+#ifdef _AMD64_
+    _SSS_ARCHITECTURE::AMD64,
+    _SSS_ARCHITECTURE::X86,
+#else
+    _SSS_ARCHITECTURE::X86,
+    _SSS_ARCHITECTURE::AMD64,
+#endif
+  };
+  param.cntArchs = sizeof(arrArchs)/sizeof(arrArchs[0]);
+  param.arrArchs = arrArchs;
+
+  _SSS_OFFLINE_IMAGE offlineImage = {
+    sizeof(*param.pOfflineImage),
+    0, path.c_str()
+  };
+
+  param.pOfflineImage = &offlineImage;
+
+  _SSS_COOKIE* pCookieTarget;
+  int Disp;
+  CHECK(vpfnSssBindServicingStack(&param, &pCookieTarget, &Disp), "Failed to bind sstack.");
+
+  // output cookie
+  /*std::wcout << std::format(L"Cookie Info [\n\tarch: {},\n\tlocation: {},\n\tversion: [{},{},{},{}]]\n]\n",
+    cookieTarget.arch.Buffer, cookieTarget.location.Buffer,
+    cookieTarget.fpvVersion->major,
+    cookieTarget.fpvVersion->minor,
+    cookieTarget.fpvVersion->build,
+    cookieTarget.fpvVersion->revision);*/
+
+  UINT64 lenPath = 0;
+  CHECK(vpfnSssGetServicingStackFilePathLength(0, pCookieTarget, L"CbsCore.dll", &lenPath), "Failed to calc the sstack path len.");
+  assert(lenPath > 0);
+  CbsCore.resize(lenPath);
+  CHECK(vpfnSssGetServicingStackFilePath(0, pCookieTarget, L"CbsCore.dll", lenPath, CbsCore.data()),
+    "Failed to get the sstack final path.");
+
+  // calc parent dir sstack
+  ServicingStack = CbsCore;
+  while (ServicingStack.size() && ServicingStack.back() != '\\')
+    ServicingStack.pop_back();
+  ServicingStack.size() && (ServicingStack.pop_back(), true);
+
+  // verifying validation
+  WIN32_FIND_DATA res_data;
+  std::wcout << L"cbscore: " << CbsCore << std::endl;
+  auto* res = FindFirstFile(CbsCore.c_str(), &res_data);
+  if (res == INVALID_HANDLE_VALUE)
+    return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+  return S_OK;
 }
 
 HRESULT StackManager::FindStack() {
@@ -108,6 +182,12 @@ HRESULT StackManager::FindStack() {
   if (g_conf.mode == CCbsConfig::SessMode::Online) {
     if (g_conf.stack_source == CCbsConfig::StackSource::Registry) {
       CHECK(FindStackByReg(), "Failed to find stack by registry.");
+    }
+    else if (g_conf.stack_source == CCbsConfig::StackSource::SSShim) {
+      const int MAX_PATH_LEN = 128;
+      g_conf.arg_path.assign(MAX_PATH_LEN, 0);
+      ExpandEnvironmentStrings(L"%WINDIR%", g_conf.arg_path.data(), MAX_PATH_LEN);
+      CHECK(FindStackBySSShim(g_conf.arg_path), "Failed to find stack by SSShim.");
     }
     else RET_HR_LOG(E_INVALIDARG,
       "Invalid global config! [Mode = %s] does not match [Source = %s].",
@@ -168,6 +248,29 @@ HRESULT StackManager::LoadSxSStore()
   if (!vpfnSxsStoreInitialize || !vpfnSxsStoreFinalize)
     RET_LASTERR_LOG("Failed to find proc in DLL SxSStore.dll.");
   else bSxSStoreLoaded = true;
+
+  return S_OK;
+}
+
+HRESULT StackManager::LoadSSShim()
+{
+  BEGIN_ERROR_HANDLING();
+
+  if (bSSShimLoaded) return S_OK;
+
+  auto* hSSShim = LoadLibrary(_T("SSShim.dll")); // default: %WINDIR%
+  if (!hSSShim) RET_LASTERR_LOG("Failed to load dll SSShim.dll.");
+
+  vpfnSssBindServicingStack = reinterpret_cast<decltype(vpfnSssBindServicingStack)>
+    (GetProcAddress(hSSShim, "SssBindServicingStack"));
+  vpfnSssGetServicingStackFilePathLength = reinterpret_cast<decltype(vpfnSssGetServicingStackFilePathLength)>
+    (GetProcAddress(hSSShim, "SssGetServicingStackFilePathLength"));
+  vpfnSssGetServicingStackFilePath = reinterpret_cast<decltype(vpfnSssGetServicingStackFilePath)>
+    (GetProcAddress(hSSShim, "SssGetServicingStackFilePath"));
+
+  if (!vpfnSssBindServicingStack || !vpfnSssGetServicingStackFilePathLength || !vpfnSssGetServicingStackFilePath)
+    RET_LASTERR_LOG("Failed to find proc in DLL SSShim.dll.");
+  else bSSShimLoaded = true;
 
   return S_OK;
 }
