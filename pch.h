@@ -20,5 +20,6 @@ using magic_enum::enum_name;
 
 #include "CbsConf.h"
 #include "CbsApi.h"
+#include "CsiApi.h"
 #include "CbsUtil.h"
 #include "StackManager.h"

@@ -25,6 +25,9 @@ const GUID IID_IServicingQuerier = { 0x6A0316CF, 0xC193, 0x4A6F, {0xB1, 0xBF, 0x
 const GUID IID_ICbsSession = { 0x75207391, 0x23F2, 0x4396, {0x85,0xF0,0x8F,0xDB,0x87,0x9E,0xD0,0xED} };
 const GUID IID_ICbsSessionPrivate = { 0x0FC2C7E52, 0xDF06, 0x445E, { 0x8D, 0x83, 0xBA, 0x12, 0x58, 0x80, 0xEA, 0x0D } };
 const GUID IID_ICbsSession9 = { 0x9C7E3CF3, 0x4C97, 0x4D36, { 0xBD, 0xEB, 0xE3, 0x09, 0x3C, 0x22, 0x8C, 0x22 } };
+const GUID IID_IStore = { 0xa817521b, 0x2b43, 0x489f, {0x8b, 0x84, 0x67, 0xac, 0xee, 0xab, 0x24, 0xa8 } };
+const GUID IID_IStore2 = { 0xa5c62f6d, 0x5e3e, 0x4cd9, {0xb3, 0x45, 0x6b, 0x28, 0x1d, 0x7a, 0x1d, 0x1e } };
+const GUID IID_ICSISmartInstaller = { 0xF10FB70D, 0x4349, 0x48D8, { 0xB4, 0x72, 0x66, 0x8B, 0xC9, 0x81, 0xF6, 0x7F } };
 #pragma endregion
 
 int NilFunc1(int) { return S_OK; }
@@ -37,7 +40,8 @@ HRESULT StackManager::FindStackByReg()
   BEGIN_ERROR_HANDLING();
 
   try {
-    winreg::RegKey keyStack(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing\\Version"), KEY_QUERY_VALUE);
+    const winreg::RegKey keyStack(HKEY_LOCAL_MACHINE,
+        _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing\\Version"), KEY_QUERY_VALUE);
     auto vs = keyStack.EnumValues();
     if (vs.empty()) RET_WIN32ERR_LOG(ERROR_NOT_FOUND, "FATAL ERROR: No stack found in the registry!");
     LogA(S_OK, WdsLogSourceTOOL, WdsLogLevelInfo, "Connected to CBS Registry, %u stack(s) found.", vs.size());
@@ -74,7 +78,7 @@ HRESULT StackManager::FindStackByReg()
 
 HRESULT StackManager::FindStackByPath(std::wstring path)
 {
-  ServicingStack = path;
+  ServicingStack = std::move(path);
 
   CbsCore = ServicingStack;
   CbsCore += _T("\\CbsCore.dll");
@@ -84,7 +88,7 @@ HRESULT StackManager::FindStackByPath(std::wstring path)
   // verifying validation
   WIN32_FIND_DATA res_data;
   std::wcout << L"cbscore: " << CbsCore << std::endl;
-  auto res = FindFirstFile(CbsCore.c_str(), &res_data);
+  auto* res = FindFirstFile(CbsCore.c_str(), &res_data);
   if (res == INVALID_HANDLE_VALUE)
     return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 
@@ -131,18 +135,14 @@ HRESULT StackManager::LoadCbsCore() {
 
   if (bCbsCoreLoaded) return S_OK;
 
-  auto hCbsCore = LoadLibrary(CbsCore.c_str());
+  auto* hCbsCore = LoadLibrary(CbsCore.c_str());
   if (!hCbsCore) RET_LASTERR_LOG("Failed to load dll %S.", CbsCore.c_str());
 
   vpfnCbsCoreInitialize =
-    (HRESULT(WINAPI*)(struct IMalloc*, int(WINAPI*)(int),
-      void (*)(void), void (*)(void), void (*)(void), void (*)(void),
-      void (*)(void), struct IClassFactory**))
-    GetProcAddress(hCbsCore, "CbsCoreInitialize");
-  vpfnCbsCoreSetState = (HRESULT(WINAPI*)(int state, PROC value))
-    GetProcAddress(hCbsCore, "CbsCoreSetState");
-  vpfnCbsCoreFinalize = (HRESULT(WINAPI*)(void))
-    GetProcAddress(hCbsCore, "CbsCoreFinalize");
+    reinterpret_cast<HRESULT(*)(struct IMalloc*, int (*)(int), void (*)(), void (*)(), void (*)(), void (*)(), void (*)(),
+                                struct IClassFactory**)>(GetProcAddress(hCbsCore, "CbsCoreInitialize"));
+  vpfnCbsCoreSetState = reinterpret_cast<HRESULT(*)(int state, PROC value)>(GetProcAddress(hCbsCore, "CbsCoreSetState"));
+  vpfnCbsCoreFinalize = reinterpret_cast<HRESULT(*)()>(GetProcAddress(hCbsCore, "CbsCoreFinalize"));
 
   if (!vpfnCbsCoreInitialize || !vpfnCbsCoreSetState || !vpfnCbsCoreFinalize)
     RET_LASTERR_LOG("Failed to find proc in DLL CbsCore.dll.");
@@ -157,13 +157,13 @@ HRESULT StackManager::LoadSxSStore()
 
   if (bSxSStoreLoaded) return S_OK;
 
-  auto hSxSStore = LoadLibrary(SxSStore.c_str());
+  auto* hSxSStore = LoadLibrary(SxSStore.c_str());
   if (!hSxSStore) RET_LASTERR_LOG("Failed to load dll %s.", SxSStore.c_str());
 
   vpfnSxsStoreInitialize =
-    (HRESULT(WINAPI*)(struct IMalloc*, int(WINAPI*)(int), void (*)(void), void (*)(void), void (*)(void), void (*)(void), struct IClassFactory**))
-    GetProcAddress(hSxSStore, "SxsStoreInitialize");
-  vpfnSxsStoreFinalize = (HRESULT(*)(void))GetProcAddress(hSxSStore, "SxsStoreFinalize");
+    reinterpret_cast<HRESULT(*)(struct IMalloc*, int (*)(int), void (*)(), void (*)(), void (*)(), void (*)(),
+                                struct IClassFactory**)>(GetProcAddress(hSxSStore, "SxsStoreInitialize"));
+  vpfnSxsStoreFinalize = reinterpret_cast<HRESULT(*)()>(GetProcAddress(hSxSStore, "SxsStoreFinalize"));
 
   if (!vpfnSxsStoreInitialize || !vpfnSxsStoreFinalize)
     RET_LASTERR_LOG("Failed to find proc in DLL SxSStore.dll.");
@@ -231,16 +231,15 @@ HRESULT StackManager::InitWdsCore() {
   if (bWdsCoreInited) return S_OK;
   if (!bCbsCoreInited) return E_NOT_VALID_STATE;
 
-  auto hWdsCore = GetModuleHandle(_T("wdscore.dll"));
+  auto* hWdsCore = GetModuleHandle(_T("wdscore.dll"));
   if (!hWdsCore) RET_LASTERR_LOG("Failed to load WdsCore.dll.");
 
   vpfnWdsSetupLogMessageA =
-    (HRESULT(WINAPI*)(void*, enum WdsLogSource, LPCSTR, LPCSTR, ULONG, LPCSTR, LPCSTR, void* CurIP, ULONG, void*, UINT))
-    GetProcAddress(hWdsCore, "WdsSetupLogMessageA");
+    reinterpret_cast<HRESULT(*)(void*, WdsLogSource, LPCSTR, LPCSTR, ULONG, LPCSTR, LPCSTR, void* CurIP, ULONG, void*, UINT)
+    >(GetProcAddress(hWdsCore, "WdsSetupLogMessageA"));
   vpfnConstructPartialMsgVA =
-    (LPVOID(WINAPI*)(enum WdsLogLevel, LPCSTR, va_list va))
-    GetProcAddress(hWdsCore, "ConstructPartialMsgVA");
-  vpfnCurrentIP = (void* (*)(void))GetProcAddress(hWdsCore, "CurrentIP");
+    reinterpret_cast<LPVOID(*)(WdsLogLevel, LPCSTR, va_list va)>(GetProcAddress(hWdsCore, "ConstructPartialMsgVA"));
+  vpfnCurrentIP = reinterpret_cast<void*(*)()>(GetProcAddress(hWdsCore, "CurrentIP"));
 
   if (!vpfnWdsSetupLogMessageA || !vpfnConstructPartialMsgVA || !vpfnCurrentIP)
     RET_LASTERR_LOG("Failed to find proc in DLL WdsCore.dll.");
@@ -256,18 +255,27 @@ HRESULT StackManager::InitWdsCore() {
 HRESULT StackManager::InitWcp() {
   BEGIN_ERROR_HANDLING();
 
-  auto hWcpDll = GetModuleHandle(_T("wcp.dll"));
+  auto* hWcpDll = GetModuleHandle(_T("wcp.dll"));
   if (!hWcpDll) RET_LASTERR_LOG("Failed to load Wcp.dll.");
 
-  vpfnGetSystemStore =
-    (int(WINAPI*)(UINT, const _GUID&, IUnknown**))
-    GetProcAddress(hWcpDll, "GetSystemStore");
+  vpfnGetSystemStore = reinterpret_cast<int(*)(UINT, const _GUID&, IUnknown**)>
+      (GetProcAddress(hWcpDll, "GetSystemStore"));
 
   if (!vpfnGetSystemStore) RET_LASTERR_LOG("Failed to find proc in DLL wcp.dll.");
 
   bWcpInited = true;
 
   return S_OK;
+}
+
+HRESULT StackManager::GetSystemStore(UINT opt, const _GUID& iid, IUnknown** ppOut) const
+{
+  BEGIN_ERROR_HANDLING();
+
+  if (!bWcpInited)
+    return LogA(E_NOT_VALID_STATE, WdsLogSourceCSI, WdsLogLevelError, "Wcp uninited, failed to GetSystemStore.");
+
+  return vpfnGetSystemStore(opt, iid, ppOut);
 }
 
 HRESULT StackManager::Load() {
@@ -337,8 +345,8 @@ HRESULT StackManager::Dispose()
 }
 
 HRESULT StackManager::ApplySess(_CbsSessionOption opt,
-  const std::wstring strClientId,
-  const std::wstring strBootDrive)
+  const std::wstring& strClientId,
+  const std::wstring& strBootDrive)
 {
   BEGIN_ERROR_HANDLING();
 
@@ -356,7 +364,7 @@ HRESULT StackManager::ApplySess(_CbsSessionOption opt,
     CHECK(pSess->Initialize(opt, strClientId.c_str(), strBootDrive.c_str(),
       (strBootDrive + L"\\Windows").c_str()),
       "Failed to initialize offline session with option = %u, location = %s.",
-      opt, strBootDrive);
+      opt, strBootDrive.c_str());
   }
 
   *(void**)(pSess + 5) = *((void**)pSess - 8 + 6);
@@ -381,6 +389,12 @@ HRESULT StackManager::SubmitSess() {
   return S_OK;
 }
 
+ICbsSession* StackManager::GetActiveSess() const
+{
+  if (pSess) return pSess;
+  RET_LOG(nullptr, E_NOT_VALID_STATE, "No active session available!");
+}
+
 HRESULT StackManager::GetNewSess(_CbsSessionOption opt) {
   if (pSess) RET_HR_LOG(E_ACCESSDENIED, "Current session is still active! You should submit it first.");
 
@@ -388,5 +402,5 @@ HRESULT StackManager::GetNewSess(_CbsSessionOption opt) {
     RET_HR_LOG(E_INVALIDARG, "Invalid global config! [Mode = %s] does not match [BootDrive = %s].",
       enum_name(g_conf.mode).data(), g_conf.arg_bootdrive.c_str());
 
-  return ApplySess(opt, g_conf.strClientName, g_conf.arg_bootdrive);
+  return ApplySess(opt, g_conf.client_name, g_conf.arg_bootdrive);
 }

@@ -50,7 +50,7 @@ constexpr const T* CONCAT_STR(const T* str1, const T* str2)
 
 template <class TNum>
 inline std::string NUM_TO_STR(TNum n) {
-  static std::stringstream ss;
+  std::stringstream ss;
   ss.clear();
   ss << n;
   std::string ret;
@@ -60,7 +60,7 @@ inline std::string NUM_TO_STR(TNum n) {
 
 template <class TNum>
 inline std::wstring NUM_TO_WSTR(TNum n) {
-  static std::wstringstream ss;
+  std::wstringstream ss;
   ss.clear();
   ss << n;
   std::wstring ret;

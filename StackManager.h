@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.h"
+#include <functional>
 
 #pragma region CoreDLLs::Reference
 extern HRESULT(WINAPI* vpfnCbsCoreInitialize)(IMalloc*, int(WINAPI*)(int), void (*)(), void (*)(), void (*)(), void (*)(), void (*)(), IClassFactory**);
@@ -25,6 +26,9 @@ extern const GUID IID_IServicingQuerier;
 extern const GUID IID_ISxSStore;
 extern const GUID IID_ICSIStore;
 extern const GUID IID_ICbsUIHandler;
+extern const GUID IID_IStore;
+extern const GUID IID_IStore2;
+extern const GUID IID_ICSISmartInstaller;
 #pragma endregion
 
 int NilFunc1(int);
@@ -34,6 +38,7 @@ class StackManager {
   bool bStackFound = false,
     bCbsCoreLoaded = false,
     bSxSStoreLoaded = false,
+    bSSShimLoaded = false,
     bCbsCoreInited = false,
     bSxSStoreInited = false,
     bWdsCoreInited = false,
@@ -55,8 +60,8 @@ class StackManager {
   // if you don't specify strBootDrive argument,
   // the session will be online.
   HRESULT ApplySess(_CbsSessionOption opt,
-    const std::wstring strClientId = L"CallCbsCore",
-    const std::wstring strBootDrive = L"");
+    const std::wstring& strClientId = L"CallCbsCore",
+    const std::wstring& strBootDrive = L"");
 public:
   // set them if you need, but null is valid.
   struct Callbacks {
@@ -65,10 +70,7 @@ public:
       ReqShutdownNowCB, ReqShutdownProcessingCB;
   } CoreEvent = {};
 
-  ICbsSession* GetActiveSess() {
-    if (pSess) return pSess;
-    RET_LOG(nullptr, E_NOT_VALID_STATE, "No active session available!");
-  }
+  [[nodiscard]] ICbsSession* GetActiveSess() const;
   HRESULT GetNewSess(_CbsSessionOption opt = CbsSessionOptionNone);
   HRESULT SubmitSess();
 
@@ -76,15 +78,24 @@ public:
 
   HRESULT LoadCbsCore();
   HRESULT LoadSxSStore();
+  HRESULT LoadSSShim();
 
   HRESULT InitCbsCore();
   HRESULT InitSxSStore();
   HRESULT InitWdsCore();
   HRESULT InitWcp();
 
+  // opt: seems must be 0, iid = IID_ICSIExternalTransformerExecutor or IID_ICSIStore
+  HRESULT GetSystemStore(UINT opt, const _GUID& iid, IUnknown** ppOut) const;
+
   // Default Settings
   HRESULT Load();
   HRESULT Dispose();
+
+  template<class FuncT>
+  [[nodiscard]] static std::function<FuncT> GetFunction(const std::wstring module, const std::string name) {
+    return reinterpret_cast<FuncT*>(GetProcAddress(GetModuleHandle(module.c_str()), name.c_str()));
+  }
 
   ~StackManager() { Dispose(); }
 };
