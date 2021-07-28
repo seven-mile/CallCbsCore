@@ -493,7 +493,8 @@ HRESULT StackManager::ApplySess(CbsSessionOption opt,
       opt, strBootDrive.c_str());
   }
 
-  *(void**)(pSess + 5) = *((void**)pSess - 8 + 6);
+  // warning: sizeof(ICbsSession) is strange
+  //*(void**)(pSess + 5) = *((void**)pSess - 8 + 6);
 
   return S_OK;
 }
