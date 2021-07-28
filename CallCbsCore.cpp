@@ -71,6 +71,60 @@ HRESULT DoTask_InstallPackage()
   return S_OK;
 }
 
+HRESULT DoTask_UninstallPackage()
+{
+  BEGIN_ERROR_HANDLING();
+
+  CHECK(g_mgr.GetNewSess(), "Failed to get a new session.");
+
+  // todo: do your own work
+
+  // A callback handler interface implemented by user
+  const ComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl("PkgInstaller");
+  // CHECK(g_sess->RegisterCbsUIHandler(pUiHandler),
+  //	"Failed to register ICbsUIHandler into current session.");
+
+  ComPtr<ICbsPackage> pPkg;
+
+  ComPtr<IEnumCbsIdentity> pIdents;
+  CHECK(g_sess->EnumeratePackages(0x1b0, &pIdents), "Failed to enum pkgs.");
+
+  bool flagFound = false;
+  for (auto& x : GetIEnumComPtrVector<ICbsIdentity, IEnumCbsIdentity>(pIdents)) {
+    BOOL isEqual = -1;
+    PWSTR strId;
+    unique_malloc_ptr<wchar_t> ustrId;
+    x->GetStringId(&strId);
+    ustrId.reset(strId);
+    strId = nullptr;
+
+    CHECK(x->InternalIsEqualbyAttribute(L"Package_for_KB4511515",
+      L"31bf3856ad364e35", L"amd64", L"", L"6.3.1.2516", &isEqual),
+      "Failed to check the pkg to uninstall!");
+    if (isEqual == 1) {
+      ComPtr<ICbsPackage> pPkg;
+      CHECK(g_sess->OpenPackage(0, x, nullptr, &pPkg), "Failed to open pkg with identity.");
+      // Guaranteed success
+      pPkg->InitiateChanges(0, CbsInstallState::Absent, pUiHandler);
+      flagFound = true;
+      break;
+    } else if (isEqual == 0) {
+      continue;
+    } else {
+      RET_WIN32ERR_LOG(ERROR_INVALID_DATA, "Failed to recognize the value of IsEqual RetVal. [isEqual = %d]", isEqual);
+    }
+  }
+
+  if (flagFound)
+    LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "Ready. The package is to be uninstalled.");
+  else
+    RET_WIN32ERR_LOG(ERROR_NOT_FOUND, "Failed to find the package to uninstall.");
+
+  CHECK(g_mgr.SubmitSess(), "Failed to submit the changes in the session.");
+
+  return S_OK;
+}
+
 HRESULT DoTask_EnumeratePkgs()
 {
   BEGIN_ERROR_HANDLING();
@@ -192,6 +246,21 @@ HRESULT DoTask_Wcp()
   ComPtr<IUnknown> pRes;
   CHECK(pStore->GetAssemblyInformation(0, pDefIdent, IID_IStore, &pRes),
     "Failed to query assembly information.");
+
+  return S_OK;
+}
+
+HRESULT DoTask_FindFoundation() {
+  BEGIN_ERROR_HANDLING();
+
+  CHECK(g_mgr.GetNewSess(), "Failed to get a new session.");
+
+  auto pFound = GetFoundationPackage();
+  assert(pFound);
+
+  CHECK(PrintPackageInfo(pFound), "Failed to print Foundation Package Information.");
+
+  CHECK(g_mgr.SubmitSess(), "Failed to submit the changes in the session.");
 
   return S_OK;
 }
