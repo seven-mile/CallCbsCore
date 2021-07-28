@@ -284,10 +284,11 @@ struct ICbsIdentity : IUnknown {
   virtual HRESULT STDMETHODCALLTYPE Clear(void) = 0;
   virtual HRESULT STDMETHODCALLTYPE IsNull(_Out_ BOOL* pbIsNull) = 0;
   virtual HRESULT STDMETHODCALLTYPE IsEqual(_Out_ ICbsIdentity* pIdentComp, _Out_ BOOL* pbIsEqual) = 0;
-  virtual HRESULT STDMETHODCALLTYPE LoadFromAttributes(LPCTSTR szName, LPCTSTR szPublicKeyToken, LPCTSTR szProcessor, LPCTSTR szLanguage, LPCTSTR szVersion) = 0;
-  virtual HRESULT STDMETHODCALLTYPE LoadFromStringId(LPCTSTR szID) = 0;
-  virtual HRESULT STDMETHODCALLTYPE SaveAsStringId(_Out_ LPTSTR* pszID) = 0;
-  virtual HRESULT STDMETHODCALLTYPE InternalIsEqualbyAttribute(LPCTSTR szName, LPCTSTR szPublicKeyToken, LPCTSTR szProcessor, LPCTSTR szLanguage, LPCTSTR szVersion, _Out_ BOOL* pbIsEqual) = 0;
+  virtual HRESULT STDMETHODCALLTYPE LoadFromAttributes(PCWSTR szName, PCWSTR szPublicKeyToken, PCWSTR szProcessor, PCWSTR szLanguage, PCWSTR szVersion) = 0;
+  virtual HRESULT STDMETHODCALLTYPE LoadFromStringId(PCWSTR szID) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetStringId(_Out_ PWSTR* pszID) = 0;
+  virtual HRESULT STDMETHODCALLTYPE SaveAsStringId(_Out_ PWSTR* pszID) = 0;
+  virtual HRESULT STDMETHODCALLTYPE InternalIsEqualbyAttribute(PCWSTR szName, PCWSTR szPublicKeyToken, PCWSTR szProcessor, PCWSTR szLanguage, PCWSTR szVersion, _Out_ BOOL* pbIsEqual) = 0;
   virtual BOOL STDMETHODCALLTYPE IsMoniker(void) = 0;
 };
 
