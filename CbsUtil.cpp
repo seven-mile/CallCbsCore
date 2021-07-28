@@ -5,6 +5,8 @@
 #include <WtsApi32.h>
 #pragma comment(lib, "WtsApi32.lib")
 
+#pragma comment(lib, "dpx.lib")
+
 // Please don't use this function, use macro LogA instead.
 HRESULT InternalLogA(WdsLogSource source, WdsLogLevel level, LPCSTR fmt, ...)
 {
@@ -1494,8 +1496,9 @@ void InsertLine(const UINT uSize)
   _puttchar(_T('\n'));
 }
 
-
-
+// ==============================
+// Package Manager Snippets
+// ==============================
 ComPtr<ICbsPackage> GetFoundationPackage()
 {
   BEGIN_ERROR_HANDLING();
@@ -1504,12 +1507,16 @@ ComPtr<ICbsPackage> GetFoundationPackage()
   CHECK(g_sess->EnumeratePackages(0x1b0, &pIdents), "Failed to enum pkgs.");
 
   for (auto& pIdent : GetIEnumComPtrVector<ICbsIdentity, IEnumCbsIdentity>(pIdents)) {
-    ComPtr<ICbsPackage> pPkg;
-    CHECK(g_sess->OpenPackage(0, pIdent, nullptr, &pPkg), "Failed to open pkg with identity.");
-    LPTSTR strReleaseType;
-    pPkg->GetProperty(CbsPackagePropertyReleaseType, &strReleaseType);
-    if (std::wstring(L"Foundation") == strReleaseType)
+    PWSTR strId;
+    pIdent->GetStringId(&strId);
+    
+    if (std::wstring tempStrId = strId; tempStrId
+      .find(L"Microsoft-Windows-Foundation-Package~31bf3856ad364e35~")
+        != std::wstring::npos) {
+      ComPtr<ICbsPackage> pPkg;
+      CHECK(g_sess->OpenPackage(0, pIdent, nullptr, &pPkg), "Failed to open pkg with identity.");
       return pPkg;
+    }
   }
 
   return nullptr;
@@ -1602,8 +1609,9 @@ unique_malloc_ptr<wchar_t> sz##y; \
 #undef GUpdProp
 }
 
-
-
+// ==============================
+// Permission
+// ==============================
 HRESULT GetServiceToken(const std::wstring& name, HANDLE& handle) {
   SERVICE_STATUS_PROCESS status;
   DWORD size = 0, cnt = 0;
@@ -1889,6 +1897,10 @@ HRESULT CheckSudoSelf()
     CHECK(SudoTI(strExe), "Failed to SudoTI.");
 
     return S_ASYNCHRONOUS;
+  } else {
+    // already TI, waiting for debugger
+    //std::wcout << L"Waiting for debugger attaching, press any key to continue...\n";
+    //getchar();
   }
 
 
