@@ -4,266 +4,266 @@
 
 #pragma region Enumerations
 
-enum CbsState : LONG {
-  CbsStateResolvedInvalid = -32,
-  CbsStateStagedInvalid = -64,
-  CbsStateInstalledInvalid = -112,
-  CbsStatePermanentInvalid = -128,
+enum class CbsState : LONG {
+  ResolvedInvalid = -32,
+  StagedInvalid = -64,
+  InstalledInvalid = -112,
+  PermanentInvalid = -128,
 
-  CbsStateAbsent = 0,
-  CbsStateUninstallPending = 5,
-  CbsStateResolving = 16,
-  CbsStateResolved = 32,
-  CbsStateStaging = 48,
-  CbsStateStaged = 64,
-  CbsStateSuperseded = 80,
-  CbsStateInstallPending = 96,
-  CbsStatePartiallyInstalled = 101,
-  CbsStateInstalled = 112,
-  CbsStatePermanent = 128,
-  CbsStateDefault = 4096,
-  CbsStateDetect = 4100,
-  CbsStateCanceled = 4101
+  Absent = 0,
+  UninstallPending = 5,
+  Resolving = 16,
+  Resolved = 32,
+  Staging = 48,
+  Staged = 64,
+  Superseded = 80,
+  InstallPending = 96,
+  PartiallyInstalled = 101,
+  Installed = 112,
+  Permanent = 128,
+  Default = 4096,
+  Detect = 4100,
+  Canceled = 4101
 };
 
-enum UpdateSelection : LONG {
-  UpdateSelectionUnknown = -1,
-  UpdateSelectionOff = 0,
-  UpdateSelectionDefault = 255,
-  UpdateSelectionOn = 1
+enum class UpdateSelection : LONG {
+  Unknown = -1,
+  Off = 0,
+  Default = 255,
+  On = 1
 };
 
-enum _CbsPackageType : LONG {
-  CbsPackageTypeUnknown = -2,
-  CbsPackageTypeExisting = -1,
-  CbsPackageTypeCabinet = 0,
-  CbsPackageTypeExpanded = 1,
-  CbsPackageTypeManifest = 2,
-  CbsPackageTypeXmlString = 3,
-  CbsPackageTypeExpandedWithMum = 4
+enum class CbsPackageType : LONG {
+  Unknown = -2,
+  Existing = -1,
+  Cabinet = 0,
+  Expanded = 1,
+  Manifest = 2,
+  XmlString = 3,
+  ExpandedWithMum = 4
 };
 
-enum _CbsRequiredAction : DWORD {
-  CbsRequiredActionNone = 0,
-  CbsRequiredActionReboot = 1
+enum class CbsRequiredAction : DWORD {
+  None = 0,
+  Reboot = 1
 };
 
-enum _CbsSessionProperty : DWORD {
-  CbsSessionPropertyRebootRequired = 1,
-  CbsSessionPropertyErrorDetail = 2,
-  CbsSessionPropertyServiceable = 3,
-  CbsSessionPropertyCompressionEnabled = 4,
-  CbsSessionPropertyReport = 5,
-  CbsSessionPropertyCorruptionFlag = 6,
+enum class CbsSessionProperty : DWORD {
+  RebootRequired = 1,
+  ErrorDetail = 2,
+  Serviceable = 3,
+  CompressionEnabled = 4,
+  Report = 5,
+  CorruptionFlag = 6,
 
-  CbsSessionPropertyVolatileSize = 8,
-  CbsSessionPropertyNonVolatileSize = 9,
-  CbsSessionPropertySharedWithWindowsSize = 10,
-  CbsSessionPropertyAccordingToExplorer = 11,
-  CbsSessionPropertyLastScavengeDatetime = 12,
-  CbsSessionPropertySupersededPackageCount = 13,
+  VolatileSize = 8,
+  NonVolatileSize = 9,
+  SharedWithWindowsSize = 10,
+  AccordingToExplorer = 11,
+  LastScavengeDatetime = 12,
+  SupersededPackageCount = 13,
 
-  CbsSessionPropertySessionCompletionDatatime = 15,
-  CbsSessionPropertyPackageMinSize = 16,
+  SessionCompletionDatatime = 15,
+  PackageMinSize = 16,
   // ?
-  CbsSessionPropertyTotalPackageMinSize = 18,
+  TotalPackageMinSize = 18,
 
-  CbsSessionPropertyRepairNeeded = 22,
-  CbsSessionPropertyReOffer = 23
+  RepairNeeded = 22,
+  ReOffer = 23
 };
 
-enum _CbsSessionOption : DWORD {
-  CbsSessionOptionNone = 0,
-  CbsSessionOptionLoadPersisted = 0x80,
-  CbsSessionOptionDoScavenge = 0x400,
-  CbsSessionOptionCancelAllPendedTransactions = 0x800,
-  CbsSessionOptionEnableCompression = 0x2000,
-  CbsSessionOptionDisableCompression = 0x4000,
-  CbsSessionOptionDetectAndRepairStoreCorruption = 0xC000,
-  CbsSessionOptionReportStackInfo = 0x100000,
-  CbsSessionOptionDoSynchronousCleanup = 0x400000,
-  CbsSessionOptionAnalyzeComponentStore = 0x8000000,
-  CbsSessionOptionCancelOnlySmartPendedTransactions = 0x80000000
+enum class CbsSessionOption : DWORD {
+  None = 0,
+  LoadPersisted = 0x80,
+  DoScavenge = 0x400,
+  CancelAllPendedTransactions = 0x800,
+  EnableCompression = 0x2000,
+  DisableCompression = 0x4000,
+  DetectAndRepairStoreCorruption = 0xC000,
+  ReportStackInfo = 0x100000,
+  DoSynchronousCleanup = 0x400000,
+  AnalyzeComponentStore = 0x8000000,
+  CancelOnlySmartPendedTransactions = 0x80000000
 };
 
-enum _CbsSessionEnhancedOption : DWORD {
-  CbsSessionEnhancedOptionManuallyRepair = 0x800
+enum class CbsSessionEnhancedOption : DWORD {
+  ManuallyRepair = 0x800
 };
 
-enum _CbsSessionState : LONG {
-  CbsSessionStateUnknown = 0,
-  CbsSessionStateReady = 16,
-  CbsSessionStateQueued = 32,
-  CbsSessionStateStarted = 48,
-  CbsSessionStatePanned = 64,
-  CbsSessionStateResolved = 80,
-  CbsSessionStateStaged = 96,
-  CbsSessionStateExecutionDelayed = 101,
-  CbsSessionStateInstalled = 112,
-  CbsSessionStateShutdownStart = 144,
-  CbsSessionStateShutdownFinish = 160,
-  CbsSessionStateStartup = 176,
-  CbsSessionStateStartupFinish = 192,
-  CbsSessionStateComplete = 208,
-  CbsSessionStateInterrupted = 224,
-  CbsSessionStateCorrupted = 240,
-  CbsSessionStateMarkedForRetry = 256
-};
-
-
-enum _CbsOperationType : LONG {
-  CbsOperationTypeNone = 0,
-  CbsOperationTypeExportRepository = 1,
-  CbsOperationTypeUpdateImage = 2,
-  CbsOperationTypePerformPrepareServicingOperation = 3,
-  CbsOperationTypePerformLateAcquisitionOperation = 4,
-  CbsOperationTypeInitICSIStore = 8
-};
-
-enum _CbsSessionConfigurableProperty : LONG {
-
-};
-
-enum _CbsApplicability : LONG {
-  CbsApplicabilityInvalidValue = -1,
-  CbsApplicabilityNotApplicable = 0,
-  CbsApplicabilityNeedsParent = 2,
-  CbsApplicabilityApplicable = 4
-};
-
-enum _CbsSelectability : LONG {
-  CbsSelectabilityInvalidValue = -1,
-  CbsSelectabilityClass1 = 1,
-  CbsSelectabilityClass2 = 2
+enum class CbsSessionState : LONG {
+  Unknown = 0,
+  Ready = 16,
+  Queued = 32,
+  Started = 48,
+  Panned = 64,
+  Resolved = 80,
+  Staged = 96,
+  ExecutionDelayed = 101,
+  Installed = 112,
+  ShutdownStart = 144,
+  ShutdownFinish = 160,
+  Startup = 176,
+  StartupFinish = 192,
+  Complete = 208,
+  Interrupted = 224,
+  Corrupted = 240,
+  MarkedForRetry = 256
 };
 
 
-enum _CbsInstallState : LONG {
-  CbsInstallStatePartiallyInstalled = -19,
-  CbsInstallStateCancel = -18,
-  CbsInstallStateSuperseded = -17,
-  CbsInstallStateDefault = -16,
-  CbsInvalidStatePermanent = -8,
-  CbsInvalidStateInstalled = -7,
-  CbsInvalidStateStaged = -4,
-  CbsInvalidStateResolved = -2,
-  CbsInstallStateUnknown = -1,
-
-  CbsInstallStateAbsent = 0,
-
-  CbsInstallStateResolving = 1,
-  CbsInstallStateResolved = 2,
-  CbsInstallStateStaging = 3,
-  CbsInstallStateStaged = 4,
-  CbsInstallStateUninstallRequested = 5,
-  CbsInstallStateInstallRequested = 6,
-  CbsInstallStateInstalled = 7,
-  CbsInstallStatePermanent = 8,
-
-  CbsInstallStateInvalid = 0x7fffffff
+enum class CbsOperationType : LONG {
+  None = 0,
+  ExportRepository = 1,
+  UpdateImage = 2,
+  PerformPrepareServicingOperation = 3,
+  PerformLateAcquisitionOperation = 4,
+  InitICSIStore = 8
 };
 
-enum _CbsPackageProperty : DWORD {
-  CbsPackagePropertyIdentityString = 1,
-  CbsPackagePropertyDisplayName = 2,
-  CbsPackagePropertyDescription = 3,
-  CbsPackagePropertyRestart = 4,
-  CbsPackagePropertyPsfName = 5,
-  CbsPackagePropertyHidden = 6,
-  CbsPackagePropertyKeyword = 7,
-  CbsPackagePropertyReleaseType = 8,
-  CbsPackagePropertyProductName = 9,
-  CbsPackagePropertyProductVersion = 10,
-  CbsPackagePropertyPermenence = 11,
-  CbsPackagePropertyCompany = 12,
-  CbsPackagePropertyCopyright = 13,
-  CbsPackagePropertySupportInformation = 14,
-  CbsPackagePropertyCreationTimeStamp = 15,
-  CbsPackagePropertyLastUpdateTimeStamp = 16,
-  CbsPackagePropertyInstallTimeStamp = 17,
-  CbsPackagePropertyInstallPackageName = 18,
-  CbsPackagePropertyInstallLocation = 19,
-  CbsPackagePropertyInstallClient = 20,
-  CbsPackagePropertyInstallUserName = 21,
-  CbsPackagePropertyExtendedError = 22,
-  CbsPackagePropertyPended = 23,
-  CbsPackagePropertyHotpatch = 24,
-  CbsPackagePropertyExclusive = 25,
-  CbsPackagePropertyAllowedOffline = 26,
-  CbsPackagePropertyCompletelyOfflineCapable = 27,
-  CbsPackagePropertyScavengeSequence = 28,
-  CbsPackagePropertyPackageSize = 29,
-  CbsPackagePropertySupersededTime = 30,
-  CbsPackagePropertyStackUpdate = 31,
-  CbsPackagePropertyReleaseQuality = 32,
-  CbsPackagePropertyTargetPartition = 33,
-  CbsPackagePropertyBinaryPartition = 34,
-  CbsPackagePropertyCapabilityIdentity = 35,
-  CbsPackagePropertyInternalStagingSizeWithExternalStorage = 36,
-  CbsPackagePropertyInternalStagingSizeWithoutExternalStorage = 37,
-  CbsPackagePropertyInstallSizeWithExternalStorage = 38,
-  CbsPackagePropertyInstallSizeWithoutExternalStorage = 39,
-  CbsPackagePropertyExternalStagingSize = 40,
-  CbsPackagePropertyFeatureFMID = 41,
-  CbsPackagePropertyFeatureGroup = 42,
-  CbsPackagePropertyPermanentUntilReset = 43,
-  CbsPackagePropertySatelliteType = 44,
-  CbsPackagePropertyDeclareSatelliteLanguage = 45,
-  CbsPackagePropertyDeclareSatelliteArch = 46,
-  CbsPackagePropertyRemoveOnReset = 51
-};
-
-enum _CbsResourceType : DWORD {
+enum class CbsSessionConfigurableProperty : LONG {
 
 };
 
-enum _CbsCardinality : DWORD {
+enum class CbsApplicability : LONG {
+  InvalidValue = -1,
+  NotApplicable = 0,
+  NeedsParent = 2,
+  Applicable = 4
+};
+
+enum class CbsSelectability : LONG {
+  InvalidValue = -1,
+  Class1 = 1,
+  Class2 = 2
+};
+
+
+enum class CbsInstallState : LONG {
+  PartiallyInstalled = -19,
+  Cancel = -18,
+  Superseded = -17,
+  Default = -16,
+  Invalid_Permanent = -8,
+  Invalid_Installed = -7,
+  Invalid_Staged = -4,
+  Invalid_Resolved = -2,
+  Unknown = -1,
+
+  Absent = 0,
+
+  Resolving = 1,
+  Resolved = 2,
+  Staging = 3,
+  Staged = 4,
+  UninstallRequested = 5,
+  InstallRequested = 6,
+  Installed = 7,
+  Permanent = 8,
+
+  Invalid = 0x7fffffff
+};
+
+enum class CbsPackageProperty : DWORD {
+  IdentityString = 1,
+  DisplayName = 2,
+  Description = 3,
+  Restart = 4,
+  PsfName = 5,
+  Hidden = 6,
+  Keyword = 7,
+  ReleaseType = 8,
+  ProductName = 9,
+  ProductVersion = 10,
+  Permenence = 11,
+  Company = 12,
+  Copyright = 13,
+  SupportInformation = 14,
+  CreationTimeStamp = 15,
+  LastUpdateTimeStamp = 16,
+  InstallTimeStamp = 17,
+  InstallPackageName = 18,
+  InstallLocation = 19,
+  InstallClient = 20,
+  InstallUserName = 21,
+  ExtendedError = 22,
+  Pended = 23,
+  Hotpatch = 24,
+  Exclusive = 25,
+  AllowedOffline = 26,
+  CompletelyOfflineCapable = 27,
+  ScavengeSequence = 28,
+  PackageSize = 29,
+  SupersededTime = 30,
+  StackUpdate = 31,
+  ReleaseQuality = 32,
+  TargetPartition = 33,
+  BinaryPartition = 34,
+  CapabilityIdentity = 35,
+  InternalStagingSizeWithExternalStorage = 36,
+  InternalStagingSizeWithoutExternalStorage = 37,
+  InstallSizeWithExternalStorage = 38,
+  InstallSizeWithoutExternalStorage = 39,
+  ExternalStagingSize = 40,
+  FeatureFMID = 41,
+  FeatureGroup = 42,
+  PermanentUntilReset = 43,
+  SatelliteType = 44,
+  DeclareSatelliteLanguage = 45,
+  DeclareSatelliteArch = 46,
+  RemoveOnReset = 51
+};
+
+enum class CbsResourceType : DWORD {
 
 };
 
-enum _CbsUpdateProperty : DWORD {
-  CbsUpdatePropertyName = 1,
-  CbsUpdatePropertyDisplayName = 2,
-  CbsUpdatePropertyDescription = 3,
-  CbsUpdatePropertyDisplayFile = 4,
-  CbsUpdatePropertyRestart = 5,
-  CbsUpdatePropertyPsfName = 6,
-  CbsUpdatePropertyDownloadSize = 7,
-  CbsUpdatePropertySetMembership = 8
-};
-
-enum tagCbsPackageDecryptionData {
+enum class CbsCardinality : DWORD {
 
 };
 
-enum tagCbsPackageEncryptionEnum {
+enum class CbsUpdateProperty : DWORD {
+  Name = 1,
+  DisplayName = 2,
+  Description = 3,
+  DisplayFile = 4,
+  Restart = 5,
+  PsfName = 6,
+  DownloadSize = 7,
+  SetMembership = 8
+};
+
+enum class tagCbsPackageDecryptionData {
 
 };
 
-enum _CbsPackageChangeOption : DWORD {
+enum class tagCbsPackageEncryptionEnum {
+
+};
+
+enum class CbsPackageChangeOption : DWORD {
   CbsTreatPackageAsPSFX = 1 << 15
 };
 
-enum _CbsOperationStage : DWORD {
-  CbsOperationStageWaiting = 1,
-  CbsOperationStagePlanning = 5,
-  CbsOperationStageDownloading = 15,
-  CbsOperationStageExtracting = 20,
-  CbsOperationStageResolving = 25,
-  CbsOperationStageStaging = 30,
-  CbsOperationStageInstalling = 40,
-  CbsOperationStageInstallingEx = 50,
-  CbsOperationStageReservicingLCU = 60
+enum class CbsOperationStage : DWORD {
+  Waiting = 1,
+  Planning = 5,
+  Downloading = 15,
+  Extracting = 20,
+  Resolving = 25,
+  Staging = 30,
+  Installing = 40,
+  InstallingEx = 50,
+  ReservicingLCU = 60
 };
 
-enum _CbsCapabilitySourceFilter : DWORD {
-  CbsOnDemandSourceEnumAllowCloud = 0x4,
-  CbsOnDemandSourceEnumTreatLocalSourceAsUUPRepo = 0x22,
-  CbsOnDemandSourceEnumReserveUnavailableFOD = 0x26,
-  CbsOnDemandSourceLanguagePack = 0x40,
-  CbsOnDemandSourceActionList = 0x10,
-  CbsOnDemandSourceWindowsUpdate = 0x100,
-  CbsOnDemandSourceRemovedMarkers = 0x1000,
+enum class CbsCapabilitySourceFilter : DWORD {
+  EnumAllowCloud = 0x4,
+  EnumTreatLocalSourceAsUUPRepo = 0x22,
+  EnumReserveUnavailableFOD = 0x26,
+  LanguagePack = 0x40,
+  ActionList = 0x10,
+  WindowsUpdate = 0x100,
+  RemovedMarkers = 0x1000,
 };
 
 #pragma endregion
@@ -297,23 +297,23 @@ struct ICbsCapability : IUnknown {
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
   virtual HRESULT STDMETHODCALLTYPE GetIdentity(ICbsIdentity**) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetProperty(_CbsPackageProperty, _Out_ LPTSTR*) = 0;
-  virtual HRESULT STDMETHODCALLTYPE EnumerateUpdates(_CbsApplicability pApplicability, _CbsSelectability pSelectability, _Out_ struct IEnumCbsUpdate** ppUpdateList) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetUpdate(LPCTSTR szUpdName, _Out_ struct ICbsUpdate** ppUpdate) = 0;
-  virtual HRESULT STDMETHODCALLTYPE AddSource(LPCTSTR basePath) = 0;
-  virtual HRESULT STDMETHODCALLTYPE RemoveSource(LPCTSTR basePath) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetProperty(CbsPackageProperty, _Out_ PWSTR*) = 0;
+  virtual HRESULT STDMETHODCALLTYPE EnumerateUpdates(CbsApplicability pApplicability, CbsSelectability pSelectability, _Out_ struct IEnumCbsUpdate** ppUpdateList) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetUpdate(_In_ PCWSTR szUpdName, _Out_ struct ICbsUpdate** ppUpdate) = 0;
+  virtual HRESULT STDMETHODCALLTYPE AddSource(_In_ PCWSTR basePath) = 0;
+  virtual HRESULT STDMETHODCALLTYPE RemoveSource(_In_ PCWSTR basePath) = 0;
   virtual HRESULT STDMETHODCALLTYPE EnumerateSources(_Out_ IEnumString** pSourceList) = 0;
-  virtual HRESULT STDMETHODCALLTYPE EvaluateApplicability(UINT option, _Out_ _CbsInstallState* pApplicabilityState, _Out_ _CbsInstallState* pCurrentState) = 0;
-  virtual HRESULT STDMETHODCALLTYPE InitiateChanges(UINT installOptions, _CbsInstallState targetState, _In_ struct ICbsUIHandler* pUIHandler) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Status(_Out_ _CbsInstallState* pProgressState, _Out_ DWORD* pLastError) = 0;
-  virtual HRESULT STDMETHODCALLTYPE ResourcesToCheck(_CbsResourceType resType, _Out_ IEnumString** pResList) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetCapability(_Out_ LPTSTR* pszNamespace, _Out_ LPTSTR* pszLang, _Out_ LPTSTR* pszArch, ULONG* dwVerMajor, ULONG* dwVerMinor) = 0;
+  virtual HRESULT STDMETHODCALLTYPE EvaluateApplicability(UINT option, _Out_ CbsInstallState* pApplicabilityState, _Out_ CbsInstallState* pCurrentState) = 0;
+  virtual HRESULT STDMETHODCALLTYPE InitiateChanges(UINT installOptions, CbsInstallState targetState, _In_ struct ICbsUIHandler* pUIHandler) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Status(_Out_ CbsInstallState* pProgressState, _Out_ DWORD* pLastError) = 0;
+  virtual HRESULT STDMETHODCALLTYPE ResourcesToCheck(CbsResourceType resType, _Out_ IEnumString** pResList) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetCapability(_Out_ PWSTR* pszNamespace, _Out_ PWSTR* pszLang, _Out_ PWSTR* pszArch, ULONG* dwVerMajor, ULONG* dwVerMinor) = 0;
   virtual HRESULT STDMETHODCALLTYPE GetDependencies(struct IEnumCbsCapability** pDependenciesList) = 0;
   virtual HRESULT STDMETHODCALLTYPE GetSources(UINT*) = 0;
   virtual HRESULT STDMETHODCALLTYPE GetDownloadSize(ULONG* nBytes) = 0;
   virtual HRESULT STDMETHODCALLTYPE GetInstallSize(ULONG* nBytes) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetInstallState(_CbsInstallState* pState) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetOwnerInformation(UINT reserved, int*, UINT*, _Out_ LPTSTR*) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetInstallState(CbsInstallState* pState) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetOwnerInformation(UINT reserved, int*, UINT*, _Out_ PWSTR*) = 0;
   virtual HRESULT STDMETHODCALLTYPE EnumerateFeaturePackages(struct IEnumCbsFeaturePackage** ppFeaturePkgList) = 0;
 
   virtual VOID STDMETHODCALLTYPE InternalAddRef(void) = 0;
@@ -329,17 +329,17 @@ struct ICbsPackage : IUnknown {
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
   virtual HRESULT STDMETHODCALLTYPE GetIdentity(_Out_ ICbsIdentity** pIdentity) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetProperty(_CbsPackageProperty prop, _Out_ LPTSTR* pValue) = 0;
-  virtual HRESULT STDMETHODCALLTYPE EnumerateUpdates(_CbsApplicability pApplicability, _CbsSelectability pSelectability, _Out_ struct IEnumCbsUpdate** ppUpdateList) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetUpdate(LPCTSTR szUpdName, _Out_ struct ICbsUpdate** ppUpdate) = 0;
-  virtual HRESULT STDMETHODCALLTYPE AddSource(LPCTSTR basePath) = 0;
-  virtual HRESULT STDMETHODCALLTYPE RemoveSource(LPCTSTR basePath) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetProperty(CbsPackageProperty prop, _Out_ PWSTR* pValue) = 0;
+  virtual HRESULT STDMETHODCALLTYPE EnumerateUpdates(CbsApplicability pApplicability, CbsSelectability pSelectability, _Out_ struct IEnumCbsUpdate** ppUpdateList) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetUpdate(PCWSTR szUpdName, _Out_ struct ICbsUpdate** ppUpdate) = 0;
+  virtual HRESULT STDMETHODCALLTYPE AddSource(PCWSTR basePath) = 0;
+  virtual HRESULT STDMETHODCALLTYPE RemoveSource(PCWSTR basePath) = 0;
   virtual HRESULT STDMETHODCALLTYPE EnumerateSources(_Out_ IEnumString** pSourceList) = 0;
-  virtual HRESULT STDMETHODCALLTYPE EvaluateApplicability(UINT option, _Out_ _CbsInstallState* pApplicabilityState, _Out_ _CbsInstallState* pCurrentState) = 0;
+  virtual HRESULT STDMETHODCALLTYPE EvaluateApplicability(UINT option, _Out_ CbsInstallState* pApplicabilityState, _Out_ CbsInstallState* pCurrentState) = 0;
   // installOptions: \in 0xFF7F
-  virtual HRESULT STDMETHODCALLTYPE InitiateChanges(UINT installOptions, _CbsInstallState targetState, _In_ struct ICbsUIHandler* pUIHandler) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Status(_Out_ _CbsInstallState* pProgressState, _Out_ DWORD* pLastError) = 0;
-  virtual HRESULT STDMETHODCALLTYPE ResourcesToCheck(_CbsResourceType resType, _Out_ IEnumString** pResList) = 0;
+  virtual HRESULT STDMETHODCALLTYPE InitiateChanges(UINT installOptions, CbsInstallState targetState, _In_ struct ICbsUIHandler* pUIHandler) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Status(_Out_ CbsInstallState* pProgressState, _Out_ DWORD* pLastError) = 0;
+  virtual HRESULT STDMETHODCALLTYPE ResourcesToCheck(CbsResourceType resType, _Out_ IEnumString** pResList) = 0;
   virtual STDMETHODCALLTYPE ~ICbsPackage() = 0;
   virtual VOID STDMETHODCALLTYPE InternalAddRef(void) = 0;
   virtual VOID STDMETHODCALLTYPE InternalRelease(void) = 0;
@@ -353,13 +353,13 @@ struct ICbsUpdate : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE GetProperty(_CbsUpdateProperty prop, _Out_ LPTSTR* pValue) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetProperty(CbsUpdateProperty prop, _Out_ PWSTR* pValue) = 0;
   virtual HRESULT STDMETHODCALLTYPE GetPackage(_Out_ ICbsPackage** ppPackage) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetParentUpdate(UINT index, _Out_ LPTSTR* ppParent, _Out_ LPTSTR* ppSet) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetCapability(_Out_ _CbsApplicability* pApplicability, _Out_ _CbsSelectability* pSelectability) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetDeclaredSet(UINT unk, _Out_ LPTSTR* pDeclaredSet, _Out_ _CbsCardinality* Cardinality) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetInstallState(_Out_ _CbsInstallState* pCurrentState, _Out_ _CbsInstallState* pIntendedState, _Out_ _CbsInstallState* pRequestState) = 0;
-  virtual HRESULT STDMETHODCALLTYPE SetInstallState(UINT options, _CbsInstallState state) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetParentUpdate(UINT index, _Out_ PWSTR* ppParent, _Out_ PWSTR* ppSet) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetCapability(_Out_ CbsApplicability* pApplicability, _Out_ CbsSelectability* pSelectability) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetDeclaredSet(UINT unk, _Out_ PWSTR* pDeclaredSet, _Out_ CbsCardinality* Cardinality) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetInstallState(_Out_ CbsInstallState* pCurrentState, _Out_ CbsInstallState* pIntendedState, _Out_ CbsInstallState* pRequestState) = 0;
+  virtual HRESULT STDMETHODCALLTYPE SetInstallState(UINT options, CbsInstallState state) = 0;
   virtual HRESULT STDMETHODCALLTYPE GetRealInstallState(_Out_ CbsState* pCurrentState, _Out_ CbsState* pIntendedState, _Out_ UpdateSelection* pRequestState) = 0;
   virtual VOID STDMETHODCALLTYPE DumpInformation(void) = 0;
   virtual STDMETHODCALLTYPE ~ICbsUpdate() = 0;
@@ -379,11 +379,11 @@ struct ICbsUIHandler : IUnknown {
 
   virtual HRESULT STDMETHODCALLTYPE Initiate(IEnumCbsUpdate* pUpdList, int*) = 0;
   virtual HRESULT STDMETHODCALLTYPE Terminate(void) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Error(HRESULT hr, LPCTSTR szUnk, int*) = 0;
-  virtual HRESULT STDMETHODCALLTYPE ResolveSource(LPCTSTR, ICbsIdentity*, LPCTSTR, LPTSTR*, int*) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Progress(_CbsInstallState stIns, UINT curProg, UINT totProg, int*) = 0;
-  virtual HRESULT STDMETHODCALLTYPE EnteringStage(UINT, enum _CbsOperationStage, int, int) = 0;
-  virtual HRESULT STDMETHODCALLTYPE ProgressEx(_CbsInstallState stIns, UINT curProg, UINT totProg, UINT, int*) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Error(HRESULT hr, PCWSTR szUnk, int*) = 0;
+  virtual HRESULT STDMETHODCALLTYPE ResolveSource(PCWSTR, ICbsIdentity*, PCWSTR, PWSTR*, int*) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Progress(CbsInstallState stIns, UINT curProg, UINT totProg, int*) = 0;
+  virtual HRESULT STDMETHODCALLTYPE EnteringStage(UINT, CbsOperationStage, int, int) = 0;
+  virtual HRESULT STDMETHODCALLTYPE ProgressEx(CbsInstallState stIns, UINT curProg, UINT totProg, UINT, int*) = 0;
 };
 
 // I don't know how to use it
@@ -392,9 +392,9 @@ struct ICSIExternalTransformerExecutor : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE Commit(LPCTSTR, LPCTSTR, LPCTSTR, LPCTSTR) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Initialize(ULONG, UINT64, LPCTSTR, LPCTSTR, LPCTSTR) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Install(LPCTSTR, LPCTSTR) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Commit(PCWSTR, PCWSTR, PCWSTR, PCWSTR) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Initialize(ULONG, UINT64, PCWSTR, PCWSTR, PCWSTR) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Install(PCWSTR, PCWSTR) = 0;
 };
 
 struct ICbsCustomInformation : IUnknown {
@@ -433,8 +433,8 @@ struct IEnumCbsCapability : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE Next(ULONG celt, _Out_ struct ICbsCapability** rgpCol, _Out_ ULONG* pbFetched) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Skip(ULONG celt) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Next(UINT celt, _Out_ struct ICbsCapability** rgpCol, _Out_ UINT* pbFetched) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Skip(UINT celt) = 0;
   virtual HRESULT STDMETHODCALLTYPE Reset(void) = 0;
   virtual HRESULT STDMETHODCALLTYPE Clone(_Out_ IEnumCbsCapability**) = 0;
 };
@@ -444,8 +444,8 @@ struct IEnumIdentity : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE Next(ULONG celt, _Out_ struct ICbsIdentity** rgpCol, _Out_ ULONG* pbFetched) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Skip(ULONG celt) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Next(UINT celt, _Out_ struct ICbsIdentity** rgpCol, _Out_ UINT* pbFetched) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Skip(UINT celt) = 0;
   virtual HRESULT STDMETHODCALLTYPE Reset(void) = 0;
   virtual HRESULT STDMETHODCALLTYPE Clone(_Out_ IEnumIdentity**) = 0;
 };
@@ -455,8 +455,8 @@ struct IEnumCbsIdentity : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE Next(ULONG celt, _Out_ struct ICbsIdentity** rgpCol, _Out_ ULONG* pbFetched) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Skip(ULONG celt) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Next(UINT celt, _Out_ struct ICbsIdentity** rgpCol, _Out_ UINT* pbFetched) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Skip(UINT celt) = 0;
   virtual HRESULT STDMETHODCALLTYPE Reset(void) = 0;
   virtual HRESULT STDMETHODCALLTYPE Clone(_Out_ IEnumCbsIdentity**) = 0;
 };
@@ -466,8 +466,8 @@ struct IEnumCbsSession : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE Next(ULONG celt, _Out_ struct ICbsSession** rgpCol, _Out_ ULONG* pbFetched) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Skip(ULONG) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Next(UINT celt, _Out_ struct ICbsSession** rgpCol, _Out_ UINT* pbFetched) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Skip(UINT) = 0;
   virtual HRESULT STDMETHODCALLTYPE Reset(void) = 0;
   virtual HRESULT STDMETHODCALLTYPE Clone(_Out_ IEnumCbsIdentity**) = 0;
 };
@@ -477,8 +477,8 @@ struct IEnumCbsUpdate : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE Next(ULONG celt, _Out_ struct ICbsUpdate** rgpCol, _Out_ ULONG* pbFetched) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Skip(ULONG celt) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Next(UINT celt, _Out_ struct ICbsUpdate** rgpCol, _Out_ UINT* pbFetched) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Skip(UINT celt) = 0;
   virtual HRESULT STDMETHODCALLTYPE Reset(void) = 0;
   virtual HRESULT STDMETHODCALLTYPE Clone(_Out_ IEnumCbsUpdate**) = 0;
 };
@@ -488,8 +488,8 @@ struct IEnumCbsActivity : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE Next(ULONG celt, _Out_ struct ICbsActivity** rgpCol, _Out_ ULONG* pbFetched) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Skip(ULONG celt) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Next(UINT celt, _Out_ struct ICbsActivity** rgpCol, _Out_ UINT* pbFetched) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Skip(UINT celt) = 0;
   virtual HRESULT STDMETHODCALLTYPE Reset(void) = 0;
   virtual HRESULT STDMETHODCALLTYPE Clone(_Out_ IEnumCbsActivity**) = 0;
 };
@@ -499,8 +499,8 @@ struct IEnumCbsFeaturePackage : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE Next(ULONG celt, struct ICbsFeaturePackage** rgpCol, ULONG* pbFetched) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Skip(ULONG celt) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Next(UINT celt, struct ICbsFeaturePackage** rgpCol, UINT* pbFetched) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Skip(UINT celt) = 0;
   virtual HRESULT STDMETHODCALLTYPE Reset(void) = 0;
   virtual HRESULT STDMETHODCALLTYPE Clone(IEnumCbsFeaturePackage**) = 0;
 };
@@ -510,33 +510,33 @@ struct ICbsSession : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef(void) override = 0;
   virtual ULONG STDMETHODCALLTYPE Release(void) override = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE Initialize(_In_ _CbsSessionOption sessionOptions, _In_ LPCTSTR clientID, _In_opt_ LPCTSTR bootDrive, _In_opt_ LPCTSTR winDir) = 0;
-  virtual HRESULT STDMETHODCALLTYPE Finalize(_In_ _CbsRequiredAction* pRequiredAction) = 0;
-  virtual HRESULT STDMETHODCALLTYPE CreatePackage(_In_ UINT options, _In_ _CbsPackageType packageType, _In_ LPCTSTR szPkgPath, _In_ LPCTSTR szSandboxPath, _Out_ ICbsPackage** pPackage) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Initialize(_In_ CbsSessionOption sessionOptions, _In_ PCWSTR clientID, _In_opt_ PCWSTR bootDrive, _In_opt_ PCWSTR winDir) = 0;
+  virtual HRESULT STDMETHODCALLTYPE Finalize(_In_ CbsRequiredAction* pRequiredAction) = 0;
+  virtual HRESULT STDMETHODCALLTYPE CreatePackage(_In_ UINT options, _In_ CbsPackageType packageType, _In_ PCWSTR szPkgPath, _In_ PCWSTR szSandboxPath, _Out_ ICbsPackage** pPackage) = 0;
   // options: 0 and 2 bit (0 | 1 | 4), unkArg will only appear in error log information
-  virtual HRESULT STDMETHODCALLTYPE OpenPackage(_In_ UINT options, _In_ ICbsIdentity* pPackageIdentity, _In_ LPCTSTR unkArgAboutLog, _Out_ ICbsPackage** pPackage) = 0;
+  virtual HRESULT STDMETHODCALLTYPE OpenPackage(_In_ UINT options, _In_ ICbsIdentity* pPackageIdentity, _In_ PCWSTR unkArgAboutLog, _Out_ ICbsPackage** pPackage) = 0;
   // options: normal: 0x1b0, all: 0x50 or 0x70
   virtual HRESULT STDMETHODCALLTYPE EnumeratePackages(_In_ UINT options, _Out_ IEnumCbsIdentity** pPackageList) = 0;
   virtual HRESULT STDMETHODCALLTYPE CreateCbsIdentity(_Out_ ICbsIdentity** ppIdentity) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetStatus(_Out_ UINT* pCurrentPhase, _Out_ _CbsSessionState* pLastSuccessfulSessionState, _Out_ BOOL* pbCompleted, _Out_ HRESULT* phrStatus) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetStatus(_Out_ UINT* pCurrentPhase, _Out_ CbsSessionState* pLastSuccessfulSessionState, _Out_ BOOL* pbCompleted, _Out_ HRESULT* phrStatus) = 0;
   virtual HRESULT STDMETHODCALLTYPE Resume(_In_ ICbsUIHandler* pUIHandler) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetSessionId(_In_ LPTSTR* pszIdentity) = 0;
-  virtual HRESULT STDMETHODCALLTYPE GetProperty(_In_ _CbsSessionProperty prop, _Out_ LPTSTR* pValue) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetSessionId(_In_ PWSTR* pszId) = 0;
+  virtual HRESULT STDMETHODCALLTYPE GetProperty(_In_ CbsSessionProperty prop, _Out_ PWSTR* pValue) = 0;
   virtual HRESULT STDMETHODCALLTYPE AddPhaseBreak(void) = 0;
-  virtual HRESULT STDMETHODCALLTYPE FinalizeEx(_In_ UINT, _Out_ _CbsRequiredAction* pRequiredAction) = 0;
+  virtual HRESULT STDMETHODCALLTYPE FinalizeEx(_In_ UINT, _Out_ CbsRequiredAction* pRequiredAction) = 0;
   // Session7 is here
-  virtual HRESULT STDMETHODCALLTYPE AddSource(_In_ UINT options, _In_ LPCTSTR basePath) = 0;
+  virtual HRESULT STDMETHODCALLTYPE AddSource(_In_ UINT options, _In_ PCWSTR basePath) = 0;
   virtual HRESULT STDMETHODCALLTYPE RegisterCbsUIHandler(_In_ ICbsUIHandler* pUIHandler) = 0;
-  virtual HRESULT STDMETHODCALLTYPE CreateWindowsUpdatePackage(_In_ UINT, _In_ LPCTSTR, _In_ GUID, _In_ UINT, _In_ _CbsPackageType, _In_ LPCTSTR, _In_ LPCTSTR, _In_ UINT, _Out_ tagCbsPackageDecryptionData* const, _In_ tagCbsPackageEncryptionEnum, _Out_ ICbsPackage**) = 0;
+  virtual HRESULT STDMETHODCALLTYPE CreateWindowsUpdatePackage(_In_ UINT, _In_ PCWSTR, _In_ GUID, _In_ UINT, _In_ CbsPackageType, _In_ PCWSTR, _In_ PCWSTR, _In_ UINT, _Out_ tagCbsPackageDecryptionData* const, _In_ tagCbsPackageEncryptionEnum, _Out_ ICbsPackage**) = 0;
   // sourceFilter: \in 0xFF, 0x40 means LanguagePacks
-  virtual HRESULT STDMETHODCALLTYPE EnumerateCapabilities(_In_ UINT sourceFilter, _In_z_ LPCTSTR szNamespace, _In_z_ LPCTSTR szLang, _In_ LPCTSTR szArch, _In_ ULONG dwMajor, _In_ ULONG dwMinor, _Out_ IEnumCbsCapability**) = 0;
-  virtual HRESULT STDMETHODCALLTYPE InitializeEx(_In_ UINT sessionOptions, _In_ LPCTSTR sourceName, _In_ LPCTSTR bootDrive, _In_ LPCTSTR winDir, _In_ LPCTSTR externalDir) = 0;
+  virtual HRESULT STDMETHODCALLTYPE EnumerateCapabilities(_In_ UINT sourceFilter, _In_z_ PCWSTR szNamespace, _In_z_ PCWSTR szLang, _In_ PCWSTR szArch, _In_ ULONG dwMajor, _In_ ULONG dwMinor, _Out_ IEnumCbsCapability**) = 0;
+  virtual HRESULT STDMETHODCALLTYPE InitializeEx(_In_ UINT sessionOptions, _In_ PCWSTR sourceName, _In_ PCWSTR bootDrive, _In_ PCWSTR winDir, _In_ PCWSTR externalDir) = 0;
   virtual HRESULT STDMETHODCALLTYPE CreateExternalTransformerExecutor(_Out_ struct ICSIExternalTransformerExecutor** ppCsiExecutor) = 0;
   virtual HRESULT STDMETHODCALLTYPE ObserveSessions(_In_ UINT options, _In_ struct ICbsSessionObserverListener* pListener, _Out_ struct IEnumCbsSession**) = 0;
   virtual HRESULT STDMETHODCALLTYPE GetActivities(_In_ __int64 options, _Out_ struct IEnumCbsActivity**) = 0;
-  virtual HRESULT STDMETHODCALLTYPE SetEnhancedOptions(_In_ _CbsSessionEnhancedOption enhancedOptions) = 0;
-  virtual HRESULT STDMETHODCALLTYPE SetProperty(_In_ _CbsSessionConfigurableProperty prop, _In_ LPCTSTR value) = 0;
-  virtual HRESULT STDMETHODCALLTYPE PerformOperation(UINT reserved, _In_ _CbsOperationType type) = 0;
+  virtual HRESULT STDMETHODCALLTYPE SetEnhancedOptions(_In_ CbsSessionEnhancedOption enhancedOptions) = 0;
+  virtual HRESULT STDMETHODCALLTYPE SetProperty(_In_ CbsSessionConfigurableProperty prop, _In_ PCWSTR value) = 0;
+  virtual HRESULT STDMETHODCALLTYPE PerformOperation(UINT reserved, _In_ CbsOperationType type) = 0;
   virtual HRESULT STDMETHODCALLTYPE SetClientToken(_In_ __int64) = 0;
 
   virtual VOID STDMETHODCALLTYPE DumpInformation(void) = 0;
@@ -552,22 +552,22 @@ struct ICbsSession : IUnknown {
   virtual ULONG STDMETHODCALLTYPE AddRef2(void) = 0;
   virtual ULONG STDMETHODCALLTYPE Release2(void) = 0;
 
-  virtual HRESULT STDMETHODCALLTYPE QuerySessionStatus(_In_ LPCTSTR szSessionID, _Out_ HRESULT* phrStatus) = 0;
+  virtual HRESULT STDMETHODCALLTYPE QuerySessionStatus(_In_ PCWSTR szSessionID, _Out_ HRESULT* phrStatus) = 0;
   virtual HRESULT STDMETHODCALLTYPE Process(
     _In_ const UINT* ServicingProcessorOptions,
-    _In_ LPCTSTR szActionListPath,
-    _In_ LPCTSTR szSandboxPath,
-    _In_ LPCTSTR szClientID,
+    _In_ PCWSTR szActionListPath,
+    _In_ PCWSTR szSandboxPath,
+    _In_ PCWSTR szClientID,
     _In_ ICbsUIHandler* pUIHandler,
-    _Out_ _CbsRequiredAction* requiredAction,
-    _Out_ LPTSTR* pszSessionID) = 0;
+    _Out_ CbsRequiredAction* requiredAction,
+    _Out_ PWSTR* pszSessionID) = 0;
   virtual HRESULT STDMETHODCALLTYPE WritePackageFileList(
     _In_ const UINT* ServicingProcessorOptions,
-    _In_ LPCTSTR szActionListPath,
-    _In_ LPCTSTR szSandboxPath,
-    _In_ LPCTSTR szFileListPath,
-    _In_ LPCTSTR szClientID,
-    _In_ LPCTSTR szPackageFilePath) = 0;
+    _In_ PCWSTR szActionListPath,
+    _In_ PCWSTR szSandboxPath,
+    _In_ PCWSTR szFileListPath,
+    _In_ PCWSTR szClientID,
+    _In_ PCWSTR szPackageFilePath) = 0;
 };
 
 struct ICbsSessionInternal;

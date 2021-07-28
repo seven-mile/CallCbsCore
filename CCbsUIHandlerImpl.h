@@ -13,11 +13,11 @@ public:
 
   virtual HRESULT STDMETHODCALLTYPE Initiate(IEnumCbsUpdate*, int*) override;
   virtual HRESULT STDMETHODCALLTYPE Terminate(void) override;
-  virtual HRESULT STDMETHODCALLTYPE Error(HRESULT, LPCTSTR, int*) override;
-  virtual HRESULT STDMETHODCALLTYPE ResolveSource(LPCTSTR, ICbsIdentity*, LPCTSTR, LPTSTR*, int*) override;
-  virtual HRESULT STDMETHODCALLTYPE Progress(_CbsInstallState, UINT, UINT, int*) override;
-  virtual HRESULT STDMETHODCALLTYPE EnteringStage(UINT, enum _CbsOperationStage, int, int) override;
-  virtual HRESULT STDMETHODCALLTYPE ProgressEx(_CbsInstallState, UINT, UINT, UINT, int*) override;
+  virtual HRESULT STDMETHODCALLTYPE Error(HRESULT, PCWSTR, int*) override;
+  virtual HRESULT STDMETHODCALLTYPE ResolveSource(PCWSTR, ICbsIdentity*, PCWSTR, PWSTR*, int*) override;
+  virtual HRESULT STDMETHODCALLTYPE Progress(CbsInstallState, UINT, UINT, int*) override;
+  virtual HRESULT STDMETHODCALLTYPE EnteringStage(UINT, CbsOperationStage, int, int) override;
+  virtual HRESULT STDMETHODCALLTYPE ProgressEx(CbsInstallState, UINT, UINT, UINT, int*) override;
 
   CCbsUIHandlerImpl(std::string name = "__und__");
   virtual ~CCbsUIHandlerImpl() = default;

@@ -59,7 +59,7 @@ class StackManager {
 
   // if you don't specify strBootDrive argument,
   // the session will be online.
-  HRESULT ApplySess(_CbsSessionOption opt,
+  HRESULT ApplySess(CbsSessionOption opt,
     const std::wstring& strClientId = L"CallCbsCore",
     const std::wstring& strBootDrive = L"");
 public:
@@ -71,7 +71,7 @@ public:
   } CoreEvent = {};
 
   [[nodiscard]] ICbsSession* GetActiveSess() const;
-  HRESULT GetNewSess(_CbsSessionOption opt = CbsSessionOptionNone);
+  HRESULT GetNewSess(CbsSessionOption opt = CbsSessionOption::None);
   HRESULT SubmitSess();
 
   HRESULT FindStack();

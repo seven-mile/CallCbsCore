@@ -294,8 +294,9 @@ HRESULT StackManager::InitCbsCore() {
   CHK_FUN2(CoreEvent.ReqShutdownNowCB);
   CHK_FUN2(CoreEvent.ReqShutdownProcessingCB);
 
-  CHECK(vpfnCbsCoreInitialize(pMalloc, CoreEvent.LockProcCB, CoreEvent.UnlockProcCB, CoreEvent.InstCreatedCB, CoreEvent.InstDestroyedCB,
-    CoreEvent.ReqShutdownNowCB, CoreEvent.ReqShutdownProcessingCB, &pCbsCoreFactory), "Failed to initialize CbsCore.");
+  CHECK(vpfnCbsCoreInitialize(g_pMalloc, CoreEvent.LockProcCB, CoreEvent.UnlockProcCB, CoreEvent.InstCreatedCB,
+    CoreEvent.InstDestroyedCB, CoreEvent.ReqShutdownNowCB, CoreEvent.ReqShutdownProcessingCB, &pCbsCoreFactory),
+    "Failed to initialize CbsCore.");
 
   bCbsCoreInited = true;
 
@@ -320,8 +321,9 @@ HRESULT StackManager::InitSxSStore() {
   CHK_FUN2(CoreEvent.ReqShutdownProcessingCB);
 #undef CHK_FUN2
 
-  CHECK(vpfnSxsStoreInitialize(pMalloc, CoreEvent.LockProcCB, CoreEvent.UnlockProcCB, CoreEvent.InstCreatedCB, CoreEvent.InstDestroyedCB,
-    CoreEvent.ReqShutdownProcessingCB, &pSxSFactory), "Failed to initialize SxSStore.");
+  CHECK(vpfnSxsStoreInitialize(g_pMalloc, CoreEvent.LockProcCB, CoreEvent.UnlockProcCB, CoreEvent.InstCreatedCB,
+    CoreEvent.InstDestroyedCB, CoreEvent.ReqShutdownProcessingCB, &pSxSFactory),
+    "Failed to initialize SxSStore.");
 
   bSxSStoreInited = true;
 
@@ -447,13 +449,14 @@ HRESULT StackManager::Dispose()
   return S_OK;
 }
 
-HRESULT StackManager::ApplySess(_CbsSessionOption opt,
+HRESULT StackManager::ApplySess(CbsSessionOption opt,
   const std::wstring& strClientId,
   const std::wstring& strBootDrive)
 {
   BEGIN_ERROR_HANDLING();
 
-  if (!bCbsCoreInited) return E_NOT_VALID_STATE;
+  if (!bCbsCoreInited)
+    RET_HR_LOG(E_NOT_VALID_STATE, "No active session available!");
   CHECK(pCbsCoreFactory->CreateInstance(nullptr, IID_ICbsSession, (void**)&pSess),
     "Failed to create ICbsSession instance.");
 
@@ -480,10 +483,10 @@ HRESULT StackManager::SubmitSess() {
 
   if (!GetActiveSess()) return E_NOT_VALID_STATE;
 
-  _CbsRequiredAction ra;
+  CbsRequiredAction ra;
   CHECK(pSess->FinalizeEx(0, &ra), "Failed to finalize cbs session.");
 
-  if (ra == CbsRequiredActionReboot)
+  if (ra == CbsRequiredAction::Reboot)
     LogA(S_OK, WdsLogSourceUI, WdsLogLevelWarning, "You may need to restart your computer to apply these changes.");
 
   pSess->Release();
@@ -498,12 +501,12 @@ ICbsSession* StackManager::GetActiveSess() const
   RET_LOG(nullptr, E_NOT_VALID_STATE, "No active session available!");
 }
 
-HRESULT StackManager::GetNewSess(_CbsSessionOption opt) {
+HRESULT StackManager::GetNewSess(CbsSessionOption opt) {
   if (pSess) RET_HR_LOG(E_ACCESSDENIED, "Current session is still active! You should submit it first.");
 
   if (g_conf.mode == CCbsConfig::SessMode::Online && !g_conf.arg_bootdrive.empty())
     RET_HR_LOG(E_INVALIDARG, "Invalid global config! [Mode = %s] does not match [BootDrive = %s].",
-      enum_name(g_conf.mode).data(), g_conf.arg_bootdrive.c_str());
+      GetEnumName(g_conf.mode).c_str(), g_conf.arg_bootdrive.c_str());
 
   return ApplySess(opt, g_conf.client_name, g_conf.arg_bootdrive);
 }

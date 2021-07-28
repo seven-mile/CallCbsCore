@@ -68,7 +68,7 @@ inline std::vector<ComPtr<T>> GetIEnumComPtrVector(ComPtr<IEnumT> pEnum)
 {
   std::vector<ComPtr<T>> v;
 
-  ULONG k;
+  UINT k;
 
   do {
     ComPtr<T> ptr;
@@ -83,7 +83,7 @@ template <class T, class IEnumT>
 inline std::vector<T> GetIEnumStructVector(ComPtr<IEnumT> pEnum)
 {
   std::vector<T> v;
-  ULONG *pk = new ULONG;
+  UINT *pk = new UINT;
 
   while (true) {
     T ptr;

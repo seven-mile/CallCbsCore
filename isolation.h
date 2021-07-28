@@ -549,9 +549,9 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
   {
   public:
       virtual HRESULT STDMETHODCALLTYPE Next(
-        /* [in] */ ULONG celt,
+        /* [in] */ UINT celt,
         /* [length_is][size_is][out] */ IDENTITY_ATTRIBUTE rgAttributes[],
-        /* [optional][out] */ ULONG * pceltWritten) = 0;
+        /* [optional][out] */ UINT * pceltWritten) = 0;
 
     virtual HRESULT STDMETHODCALLTYPE CurrentIntoBuffer(
       /* [in] */ SIZE_T cbAvailable,
@@ -559,7 +559,7 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
       /* [out] */ SIZE_T* pcbUsed) = 0;
 
   virtual HRESULT STDMETHODCALLTYPE Skip(
-    /* [in] */ ULONG celt) = 0;
+    /* [in] */ UINT celt) = 0;
 
 virtual HRESULT STDMETHODCALLTYPE Reset(void) = 0;
 
@@ -587,7 +587,7 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
 
     HRESULT(STDMETHODCALLTYPE* Next)(
       IEnumIDENTITY_ATTRIBUTE* This,
-      /* [in] */ ULONG celt,
+      /* [in] */ UINT celt,
       /* [length_is][size_is][out] */ IDENTITY_ATTRIBUTE rgAttributes[],
       /* [optional][out] */ ULONG* pceltWritten);
 
@@ -599,7 +599,7 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
 
     HRESULT(STDMETHODCALLTYPE* Skip)(
       IEnumIDENTITY_ATTRIBUTE* This,
-      /* [in] */ ULONG celt);
+      /* [in] */ UINT celt);
 
     HRESULT(STDMETHODCALLTYPE* Reset)(
       IEnumIDENTITY_ATTRIBUTE* This);
@@ -655,7 +655,7 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
 
   HRESULT STDMETHODCALLTYPE IEnumIDENTITY_ATTRIBUTE_Next_Proxy(
     IEnumIDENTITY_ATTRIBUTE* This,
-    /* [in] */ ULONG celt,
+    /* [in] */ UINT celt,
     /* [length_is][size_is][out] */ IDENTITY_ATTRIBUTE rgAttributes[],
     /* [optional][out] */ ULONG* pceltWritten);
 
@@ -683,7 +683,7 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
 
   HRESULT STDMETHODCALLTYPE IEnumIDENTITY_ATTRIBUTE_Skip_Proxy(
     IEnumIDENTITY_ATTRIBUTE* This,
-    /* [in] */ ULONG celt);
+    /* [in] */ UINT celt);
 
 
   void __RPC_STUB IEnumIDENTITY_ATTRIBUTE_Skip_Stub(
@@ -736,12 +736,12 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
   {
   public:
       virtual HRESULT STDMETHODCALLTYPE Next(
-        /* [in] */ ULONG celt,
+        /* [in] */ UINT celt,
         /* [length_is][size_is][out] */ IDefinitionIdentity * rgpIDefinitionIdentity[],
-        /* [out] */ ULONG * pceltWritten) = 0;
+        /* [out] */ UINT * pceltWritten) = 0;
 
     virtual HRESULT STDMETHODCALLTYPE Skip(
-      /* [in] */ ULONG celt) = 0;
+      /* [in] */ UINT celt) = 0;
 
   virtual HRESULT STDMETHODCALLTYPE Reset(void) = 0;
 
@@ -769,13 +769,13 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
 
     HRESULT(STDMETHODCALLTYPE* Next)(
       IEnumDefinitionIdentity* This,
-      /* [in] */ ULONG celt,
+      /* [in] */ UINT celt,
       /* [length_is][size_is][out] */ IDefinitionIdentity* rgpIDefinitionIdentity[],
       /* [out] */ ULONG* pceltWritten);
 
     HRESULT(STDMETHODCALLTYPE* Skip)(
       IEnumDefinitionIdentity* This,
-      /* [in] */ ULONG celt);
+      /* [in] */ UINT celt);
 
     HRESULT(STDMETHODCALLTYPE* Reset)(
       IEnumDefinitionIdentity* This);
@@ -828,7 +828,7 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
 
   HRESULT STDMETHODCALLTYPE IEnumDefinitionIdentity_Next_Proxy(
     IEnumDefinitionIdentity* This,
-    /* [in] */ ULONG celt,
+    /* [in] */ UINT celt,
     /* [length_is][size_is][out] */ IDefinitionIdentity* rgpIDefinitionIdentity[],
     /* [out] */ ULONG* pceltWritten);
 
@@ -842,7 +842,7 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
 
   HRESULT STDMETHODCALLTYPE IEnumDefinitionIdentity_Skip_Proxy(
     IEnumDefinitionIdentity* This,
-    /* [in] */ ULONG celt);
+    /* [in] */ UINT celt);
 
 
   void __RPC_STUB IEnumDefinitionIdentity_Skip_Stub(
@@ -895,12 +895,12 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
   {
   public:
       virtual HRESULT STDMETHODCALLTYPE Next(
-        /* [in] */ ULONG celt,
+        /* [in] */ UINT celt,
         /* [length_is][size_is][out] */ IReferenceIdentity * *prgpIReferenceIdentity,
-        /* [out] */ ULONG * pceltWritten) = 0;
+        /* [out] */ UINT * pceltWritten) = 0;
 
     virtual HRESULT STDMETHODCALLTYPE Skip(
-        ULONG celt) = 0;
+        UINT celt) = 0;
 
     virtual HRESULT STDMETHODCALLTYPE Reset(void) = 0;
 
@@ -928,13 +928,13 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
 
     HRESULT(STDMETHODCALLTYPE* Next)(
       IEnumReferenceIdentity* This,
-      /* [in] */ ULONG celt,
+      /* [in] */ UINT celt,
       /* [length_is][size_is][out] */ IReferenceIdentity** prgpIReferenceIdentity,
       /* [out] */ ULONG* pceltWritten);
 
     HRESULT(STDMETHODCALLTYPE* Skip)(
       IEnumReferenceIdentity* This,
-      ULONG celt);
+      UINT celt);
 
     HRESULT(STDMETHODCALLTYPE* Reset)(
       IEnumReferenceIdentity* This);
@@ -987,7 +987,7 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
 
   HRESULT STDMETHODCALLTYPE IEnumReferenceIdentity_Next_Proxy(
     IEnumReferenceIdentity* This,
-    /* [in] */ ULONG celt,
+    /* [in] */ UINT celt,
     /* [length_is][size_is][out] */ IReferenceIdentity** prgpIReferenceIdentity,
     /* [out] */ ULONG* pceltWritten);
 
@@ -1001,7 +1001,7 @@ virtual HRESULT STDMETHODCALLTYPE Clone(
 
   HRESULT STDMETHODCALLTYPE IEnumReferenceIdentity_Skip_Proxy(
     IEnumReferenceIdentity* This,
-    ULONG celt);
+    UINT celt);
 
 
   void __RPC_STUB IEnumReferenceIdentity_Skip_Stub(
