@@ -7,6 +7,7 @@
 
 template<class Interface>
 using ComPtr = _com_ptr_t<_com_IIID<Interface, nullptr>>;
+using ComBSTR = _bstr_t;
 
 // Exception handling helper functions
 
@@ -93,6 +94,48 @@ inline int64_t STR_TO_NUM_HEX(const std::wstring& s) {
   ss >> n;
   return n;
 }
+
+inline std::string WSTR_TO_STR(const std::wstring& s) {
+  std::string res;
+  for (wchar_t wc:s)
+    res.push_back(static_cast<char>(wc));
+  return res;
+}
+
+inline std::wstring STR_TO_WSTR(const std::string& s) {
+  std::wstring res;
+  for (char c:s)
+    res.push_back(static_cast<wchar_t>(c));
+  return res;
+}
+
+inline LPMALLOC g_pMalloc = nullptr;
+
+inline auto heapFreeFunc = [](auto *lpMem){
+  if (!HeapFree(GetProcessHeap(), 0, reinterpret_cast<void*>(lpMem))) {
+    RET_LASTERR_LOG("Failed to HeapFree memory! [lpMem = %p]", lpMem);
+  }
+  return S_OK;
+};
+
+inline auto mallocFreeFunc = [](auto *argpMem){
+  const auto lpMem = reinterpret_cast<void*>(argpMem);
+  const auto resDidAlloc = g_pMalloc->DidAlloc(lpMem);
+  if (resDidAlloc == 1)
+    g_pMalloc->Free(reinterpret_cast<void*>(lpMem));
+  else {
+    LogA(E_INVALIDARG, WdsLogSourceTOOL, WdsLogLevelWarning,
+      "the memory is not allocated by g_pMalloc, potential memory leak!! [DidAlloc = %d] we will HeapFree it.", resDidAlloc);
+    heapFreeFunc(lpMem);
+  }
+};
+
+template<class T>
+using unique_malloc_ptr = std::unique_ptr<T, decltype(mallocFreeFunc)>;
+
+
+template<class T>
+using unique_win32_ptr = std::unique_ptr<T, decltype(heapFreeFunc)>;
 
 // Disable Warnings
 

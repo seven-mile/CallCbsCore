@@ -1521,41 +1521,44 @@ HRESULT PrintPackageInfo(const ComPtr<ICbsPackage>& pPkg, const bool bIns)
 
   if (!pPkg) RET_HR_LOG(E_INVALIDARG, "The pointer to the pkg is invalid.");
 
-#define GPkgProp(x, y) CHECK(pPkg->GetProperty(CbsPackageProperty##x, &(y)), "OK")
+#define GPkgProp(x, y) \
+unique_malloc_ptr<wchar_t> sz##y; \
+{\
+  PWSTR rawsz##y; \
+  CHECK(pPkg->GetProperty(CbsPackageProperty::x, &(rawsz##y)), "OK");\
+  (sz##y).reset(rawsz##y); \
+}
 
   InsertLine(LineSizeLong);
 
+  GPkgProp(DisplayName, Name);
+  GPkgProp(Description, Desc);
+  GPkgProp(IdentityString, Ident);
+  GPkgProp(ReleaseType, ReType);
+  GPkgProp(PackageSize, Size);
+  GPkgProp(SupportInformation, Sup);
 
-  LPTSTR szName, szDesc, szIdent, szReType, szSize, szSup;
-  GPkgProp(DisplayName, szName);
-  GPkgProp(Description, szDesc);
-  GPkgProp(IdentityString, szIdent);
-  GPkgProp(ReleaseType, szReType);
-  GPkgProp(PackageSize, szSize);
-  GPkgProp(SupportInformation, szSup);
-
-  _CbsInstallState stIns = CbsInstallStateInvalid,
-    stApp = CbsInstallStateInvalid;
+  CbsInstallState stIns = CbsInstallState::Invalid,
+    stApp = CbsInstallState::Invalid;
 
   CHECK(pPkg->EvaluateApplicability(0, &stApp, &stIns), "Failed to check the state of the pkg.");
-  auto strIns = enum_name(stIns),
-    strApp = enum_name(stApp);
+  auto strIns = GetEnumName(stIns),
+    strApp = GetEnumName(stApp);
 
-  _tprintf(L"Name: %s\n", szName);
-  _tprintf(L"Description: %s\n", szDesc);
-  _tprintf(L"Identity: %s\n", szIdent);
-  _tprintf(L"Release Type: %s\n", szReType);
-  _tprintf(L"Pkg Size: %s Bytes\n", szSize);
-  _tprintf(L"Support URL: %s\n", szSup);
+  _tprintf(L"Name: %s\n", szName.get());
+  _tprintf(L"Description: %s\n", szDesc.get());
+  _tprintf(L"Identity: %s\n", szIdent.get());
+  _tprintf(L"Release Type: %s\n", szReType.get());
+  _tprintf(L"Pkg Size: %s Bytes\n", szSize.get());
+  _tprintf(L"Support URL: %s\n", szSup.get());
 
-  _tprintf(L"Install State: %S\n", strIns.data());
-  _tprintf(L"Applicable State: %S\n", strApp.data());
+  _tprintf(L"Install State: %S\n", strIns.c_str());
+  _tprintf(L"Applicable State: %S\n", strApp.c_str());
 
   if (bIns) {
     InsertLine(LineSizeMedium);
-    LPTSTR szInsTime;
-    GPkgProp(InstallTimeStamp, szInsTime);
-    auto tm = WindowsTimeStamp2SystemTime(STR_TO_NUM_HEX(szInsTime));
+    GPkgProp(InstallTimeStamp, InsTime);
+    auto tm = WindowsTimeStamp2SystemTime(STR_TO_NUM_HEX(szInsTime.get()));
     _tprintf(L"Install time: %04hu/%02hu/%02hu %02hu:%02hu:%02hu\n", tm.wYear, tm.wMonth, tm.wDay, tm.wHour, tm.wMinute, tm.wSecond);
   }
 
@@ -1571,22 +1574,27 @@ HRESULT PrintUpdateInfo(const ComPtr<ICbsUpdate>& pUpd)
 
   if (!pUpd) RET_HR_LOG(E_INVALIDARG, "The pointer to the upd is invalid.");
 
-#define GUpdProp(x, y) CHECK(pUpd->GetProperty(CbsUpdateProperty##x, &(y)), "OK")
+#define GUpdProp(x, y) \
+unique_malloc_ptr<wchar_t> sz##y; \
+{ \
+  PWSTR rawsz##y; \
+  CHECK(pUpd->GetProperty(CbsUpdateProperty::x, &(rawsz##y)), "OK") \
+  (sz##y).reset(rawsz##y);\
+}
 
   InsertLine(LineSizeLong);
 
-  LPTSTR szName, szDesc, szRawName, szFile, szDlSize;
-  GUpdProp(DisplayName, szName);
-  GUpdProp(Description, szDesc);
-  GUpdProp(Name, szRawName);
-  GUpdProp(DisplayFile, szFile);
-  GUpdProp(DownloadSize, szDlSize);
+  GUpdProp(DisplayName, Name);
+  GUpdProp(Description, Desc);
+  GUpdProp(Name, RawName);
+  GUpdProp(DisplayFile, File);
+  GUpdProp(DownloadSize, DlSize);
 
-  _tprintf(L"Display Name: %s\n", szName);
-  _tprintf(L"Description: %s\n", szDesc);
-  _tprintf(L"Raw Name: %s\n", szRawName);
-  _tprintf(L"Display File: %s\n", szFile);
-  _tprintf(L"Download Size: %s Bytes\n", szDlSize);
+  _tprintf(L"Display Name: %s\n", szName.get());
+  _tprintf(L"Description: %s\n", szDesc.get());
+  _tprintf(L"Raw Name: %s\n", szRawName.get());
+  _tprintf(L"Display File: %s\n", szFile.get());
+  _tprintf(L"Download Size: %s Bytes\n", szDlSize.get());
 
   InsertLine(LineSizeLong);
 

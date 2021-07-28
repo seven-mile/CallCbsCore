@@ -11,6 +11,10 @@ struct LUNICODE_STRING
   size_t Length;
   size_t MaximumLength;
   wchar_t *Buffer;
+
+  inline operator std::wstring() {
+    return {Buffer, Length / sizeof(wchar_t)};
+  }
 };
 
 // example: 10.0.19041.1022
@@ -22,17 +26,11 @@ struct FOUR_PART_VERSION
   short major;
 };
 
-struct _SSS_COOKIE
-{
-  FOUR_PART_VERSION fpvVersion;
-  LUNICODE_STRING location, windir, arch;
-};
-
 struct _SSS_OFFLINE_IMAGE
 {
   UINT cbSize;
   UINT dwFlags;
-  PCWSTR pcwszWindir;
+  BSTR pcwszWindir;
 };
 
 // \in 0111 1111 1111 ((1 << 12) - 1)
@@ -66,6 +64,13 @@ enum class _SSS_ARCHITECTURE : short {
   WOW64
 };
 
+struct _SSS_COOKIE
+{
+  FOUR_PART_VERSION fpvVersion;
+  LUNICODE_STRING location, windir;
+  _SSS_ARCHITECTURE arch;
+};
+
 struct _SSS_BIND_PARAMETERS
 {
   UINT cbSize;
@@ -81,6 +86,7 @@ struct _SSS_BIND_PARAMETERS
 
 extern HRESULT(*vpfnSssBindServicingStack)(_In_ _SSS_BIND_PARAMETERS *pInputParams, _Out_ _SSS_COOKIE **ppCookie, int *pDisp);
 extern HRESULT(*vpfnSssGetServicingStackFilePathLength)
-  (_In_ int dwFlags, _In_ _SSS_COOKIE *pCookie, _In_ const wchar_t *pszFile, _Out_ UINT64 *pLen);
+  (_In_ int dwFlags, _In_ _SSS_COOKIE *pCookie, _In_ LPCWSTR pszFile, _Out_ UINT64 *pLen);
 extern HRESULT(*vpfnSssGetServicingStackFilePath)
-  (_In_ int dwFlags, _In_ _SSS_COOKIE *pCookie, _In_ const wchar_t *pszFile, _In_ UINT64 cchBuffer, _Out_ wchar_t* bufferPath);
+  (_In_ int dwFlags, _In_ _SSS_COOKIE *pCookie, _In_ LPCWSTR pszFile, _In_ UINT64 cchBuffer,
+    _Out_ LPWSTR bufferPath, _Out_ UINT64 *pGotLen);

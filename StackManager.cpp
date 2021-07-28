@@ -133,29 +133,40 @@ HRESULT StackManager::FindStackBySSShim(std::wstring path) {
 
   _SSS_OFFLINE_IMAGE offlineImage = {
     sizeof(*param.pOfflineImage),
-    0, path.c_str()
+    0, ComBSTR(path.c_str())
   };
 
   param.pOfflineImage = &offlineImage;
 
   _SSS_COOKIE* pCookieTarget;
-  int Disp;
-  CHECK(vpfnSssBindServicingStack(&param, &pCookieTarget, &Disp), "Failed to bind sstack.");
+  unique_win32_ptr<_SSS_COOKIE> pCookie;
+
+  int Disposition;
+  CHECK(vpfnSssBindServicingStack(&param, &pCookieTarget, &Disposition), "Failed to bind sstack. [Path = %S]", path.c_str());
+  pCookie.reset(pCookieTarget);
+  pCookieTarget = nullptr;
+
+  auto tempStr = std::wstring(pCookie->location);
 
   // output cookie
-  /*std::wcout << std::format(L"Cookie Info [\n\tarch: {},\n\tlocation: {},\n\tversion: [{},{},{},{}]]\n]\n",
-    cookieTarget.arch.Buffer, cookieTarget.location.Buffer,
-    cookieTarget.fpvVersion->major,
-    cookieTarget.fpvVersion->minor,
-    cookieTarget.fpvVersion->build,
-    cookieTarget.fpvVersion->revision);*/
+  std::wcout << std::format(L"Cookie Info [\n\tarch: {},\n\twindir: {},\n\tlocation: {},\n\tversion: [{},{},{},{}]\n]\n",
+    STR_TO_WSTR(GetEnumName(pCookie->arch)).c_str(),
+    std::wstring(pCookie->windir),
+    std::wstring(pCookie->location),
+    pCookie->fpvVersion.major,
+    pCookie->fpvVersion.minor,
+    pCookie->fpvVersion.build,
+    pCookie->fpvVersion.revision);
 
   UINT64 lenPath = 0;
-  CHECK(vpfnSssGetServicingStackFilePathLength(0, pCookieTarget, L"CbsCore.dll", &lenPath), "Failed to calc the sstack path len.");
+  CHECK(vpfnSssGetServicingStackFilePathLength(0, pCookie.get(), L"CbsCore.dll", &lenPath),
+    "Failed to calc the sstack path len.");
   assert(lenPath > 0);
-  CbsCore.resize(lenPath);
-  CHECK(vpfnSssGetServicingStackFilePath(0, pCookieTarget, L"CbsCore.dll", lenPath, CbsCore.data()),
+  CbsCore.assign(lenPath*2, 0);
+  UINT64 gotLen = -1;
+  CHECK(vpfnSssGetServicingStackFilePath(0, pCookie.get(), L"CbsCore.dll", lenPath*2, CbsCore.data(), &gotLen),
     "Failed to get the sstack final path.");
+  CbsCore.resize(lstrlenW(CbsCore.c_str()));
 
   // calc parent dir sstack
   ServicingStack = CbsCore;
@@ -281,9 +292,9 @@ HRESULT StackManager::InitCbsCore() {
   if (bCbsCoreInited) return S_OK;
   if (!bCbsCoreLoaded) return E_NOT_VALID_STATE;
 
-  LPMALLOC pMalloc = nullptr;
-
-  CHECK(CoGetMalloc(1u, &pMalloc), "CoGetMalloc failed.");
+  if (!g_pMalloc) {
+    CHECK(CoGetMalloc(1u, &g_pMalloc), "CoGetMalloc failed.");
+  }
 
   if (!CoreEvent.LockProcCB) CoreEvent.LockProcCB = NilFunc1;
 #define CHK_FUN2(x) if(!(x)) (x) = NilFunc2
@@ -309,9 +320,9 @@ HRESULT StackManager::InitSxSStore() {
   if (!bCbsCoreInited || !bSxSStoreLoaded)
     return E_NOT_VALID_STATE;
 
-  LPMALLOC pMalloc = nullptr;
-
-  CHECK(CoGetMalloc(1u, &pMalloc), "CoGetMalloc failed.");
+  if (!g_pMalloc) {
+    CHECK(CoGetMalloc(1u, &g_pMalloc), "CoGetMalloc failed.");
+  }
 
   if (!CoreEvent.LockProcCB) CoreEvent.LockProcCB = NilFunc1;
   CHK_FUN2(CoreEvent.UnlockProcCB);
@@ -415,10 +426,15 @@ HRESULT StackManager::Dispose()
     CHECK(vpfnSxsStoreFinalize(), "Failed to finalize SxSStore.");
   }
 
+  // also unload sxsstore and wdscore
   if (bCbsCoreInited) {
     pCbsCoreFactory->Release();
     pCbsCoreFactory = nullptr;
     CHECK(vpfnCbsCoreFinalize(), "Failed to finalize CbsCore.");
+  }
+
+  if (bSSShimLoaded) {
+    FreeLibrary(GetModuleHandle(_T("SSShim.dll")));
   }
 
   // Configuration
@@ -426,6 +442,7 @@ HRESULT StackManager::Dispose()
   bStackFound = false;
   bCbsCoreLoaded = false;
   bSxSStoreLoaded = false;
+  bSSShimLoaded = false;
   bCbsCoreInited = false;
   bSxSStoreInited = false;
   bWdsCoreInited = false;
@@ -437,6 +454,9 @@ HRESULT StackManager::Dispose()
   vpfnSetTestMode = nullptr;
   vpfnSxsStoreInitialize = nullptr;
   vpfnSxsStoreFinalize = nullptr;
+  vpfnSssBindServicingStack = nullptr;
+  vpfnSssGetServicingStackFilePath = nullptr;
+  vpfnSssGetServicingStackFilePathLength = nullptr;
   vpfnWdsSetupLogMessageA = nullptr;
   vpfnConstructPartialMsgVA = nullptr;
   vpfnCurrentIP = nullptr;
@@ -468,7 +488,7 @@ HRESULT StackManager::ApplySess(CbsSessionOption opt,
   else
   {
     CHECK(pSess->Initialize(opt, strClientId.c_str(), strBootDrive.c_str(),
-      (strBootDrive + L"\\Windows").c_str()),
+          (strBootDrive + L"\\Windows").c_str()),
       "Failed to initialize offline session with option = %u, location = %s.",
       opt, strBootDrive.c_str());
   }

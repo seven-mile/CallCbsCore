@@ -51,20 +51,20 @@ HRESULT DoTask_InstallPackage()
   _CbsInstallState stCur, stApp;
   CHECK(pPkg->EvaluateApplicability(0, &stApp, &stCur), "Failed to evaluate the package, maybe it's invalid.");
 
-  if (stCur == CbsInstallStateInstalled) {
+  if (stCur == CbsInstallState::Installed) {
     LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "You have installed this package! The program is to exit.");
     return S_OK;
   }
 
-  if (stApp != CbsInstallStateInstalled)
+  if (stApp != CbsInstallState::Installed)
     RET_HR_LOG(E_NOT_VALID_STATE, "The package is not applicable for your OS.");
 
-  CHECK(PrintPackageInfo(pPkg, stCur == CbsInstallStateInstalled), "Failed to print package info.");
+  CHECK(PrintPackageInfo(pPkg, stCur == CbsInstallState::Installed), "Failed to print package info.");
 
   LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "Ready. The package is to be installed.");
 
   // Guaranteed success
-  pPkg->InitiateChanges(0, CbsInstallStateInstalled, pUiHandler);
+  pPkg->InitiateChanges(0, CbsInstallState::Installed, pUiHandler);
 
   CHECK(g_mgr.SubmitSess(), "Failed to submit the changes in the session.");
 
@@ -108,9 +108,9 @@ HRESULT DoTask_EnableHyperV()
   ComPtr<ICbsUpdate> pUpd;
   CHECK(pFound->GetUpdate(L"Microsoft-Windows-HyperV-OptionalFeature-HypervisorPlatform-Disabled-Package", &pUpd), "..");
 
-  pUpd->SetInstallState(0, CbsInstallStateInstalled);
+  pUpd->SetInstallState(0, CbsInstallState::Installed);
 
-  pFound->InitiateChanges(0, CbsInstallStateInstalled, pUiHandler);
+  pFound->InitiateChanges(0, CbsInstallState::Installed, pUiHandler);
 
   /*ComPtr<IEnumCbsUpdate> pUpds;
   CHECK(pFound->EnumerateUpdates(CbsApplicabilityApplicable, CbsSelectabilityClass1, &pUpds),
@@ -134,7 +134,7 @@ HRESULT DoTask_EnumerateUpdates()
   assert(pFound);
 
   ComPtr<IEnumCbsUpdate> pUpds;
-  CHECK(pFound->EnumerateUpdates(CbsApplicabilityApplicable, CbsSelectabilityClass1, &pUpds),
+  CHECK(pFound->EnumerateUpdates(CbsApplicability::Applicable, CbsSelectability::Class1, &pUpds),
     "Failed to enumerate updates from foundation package.");
 
   for (auto& pUpd : GetIEnumComPtrVector<ICbsUpdate, IEnumCbsUpdate>(pUpds))
@@ -234,6 +234,11 @@ int main()
 
   LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "We are to dispose the manager.");
   CHECK(g_mgr.Dispose(), "Failed to dispose StackManager.");
+
+  if (g_pMalloc) {
+    g_pMalloc->Release();
+    g_pMalloc = nullptr;
+  }
 
   CoUninitialize();
 
