@@ -29,26 +29,29 @@ HRESULT DoTask_InstallPackage()
 
   ComPtr<ICbsPackage> pPkg;
 
-  InitCommonControls();
+  //InitCommonControls();
 
-  WCHAR file_path[MAX_PATH], file_title[MAX_PATH];
-  OPENFILENAMEW ofn{ 0 };
-  ofn.lStructSize = sizeof ofn;
-  //ofn.hwndOwner = GetConsoleWindow();
-  ofn.lpstrFilter = L"Cab files (*.cab)\0*.cab\0All files (*.*)\0*.*\0";
-  ofn.lpstrFile = file_path;
-  ofn.lpstrFileTitle = file_title;
-  ofn.nMaxFile = ofn.nMaxFileTitle = MAX_PATH;
-  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+  WCHAR file_path[MAX_PATH]{}, file_title[MAX_PATH];
+  //OPENFILENAMEW ofn{ 0 };
+  //ofn.lStructSize = sizeof ofn;
+  ////ofn.hwndOwner = GetConsoleWindow();
+  //ofn.lpstrFilter = L"Cab files (*.cab)\0*.cab\0All files (*.*)\0*.*\0";
+  //ofn.lpstrFile = file_path;
+  //ofn.lpstrFileTitle = file_title;
+  //ofn.nMaxFile = ofn.nMaxFileTitle = MAX_PATH;
+  //ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-  if (!GetOpenFileNameW(&ofn)) RET_HR_LOG(S_OK, "The operation was canceled by user.");
+  //if (!GetOpenFileNameW(&ofn)) RET_HR_LOG(S_OK, "The operation was canceled by user.");
 
-  CHECK(g_sess->CreatePackage(0, CbsPackageTypeCabinet,
+  std::wcout << L"Please input the cab package file path:\n";
+  wscanf_s(L"%s", file_path, 260);
+
+  CHECK(g_sess->CreatePackage(0, CbsPackageType::Cabinet,
     file_path,
     _T("C:\\Users\\HigHwind\\Desktop\\tmp\\cbstemp\\sandbox"),
     &pPkg), "Failed to create package from cab file.");
 
-  _CbsInstallState stCur, stApp;
+  CbsInstallState stCur, stApp;
   CHECK(pPkg->EvaluateApplicability(0, &stApp, &stCur), "Failed to evaluate the package, maybe it's invalid.");
 
   if (stCur == CbsInstallState::Installed) {
@@ -270,7 +273,6 @@ int main()
   BEGIN_ERROR_HANDLING();
 
   g_conf.output_log = true;
-  g_conf.SetLogFile(CBS_LOG_FILE);
   CHECK(CheckSudoSelf(), "Failed to check permission and sudo self.");
 
   if (hr == S_ASYNCHRONOUS)
@@ -287,10 +289,12 @@ int main()
   setlocale(LC_ALL, "");
 
   // The env var of app is used to config CBS's logging setting.
-  //g_conf.SetLogFile(CBS_LOG_FILE);
+  g_conf.SetLogFile(CBS_LOG_FILE);
   //g_conf.mode = CCbsConfig::SessMode::Online;
-  g_conf.mode = CCbsConfig::SessMode::Online;
+  g_conf.mode = CCbsConfig::SessMode::Offline;
   g_conf.stack_source = CCbsConfig::StackSource::SSShim;
+  g_conf.arg_path = L"D:\\MyCache\\Ws\\Windows";//L"C:\\Windows";
+  g_conf.arg_bootdrive = L"D:\\MyCache\\Ws";
 
   CHECK(g_mgr.FindStack(), "Failed to find stack [StackSource = %s].",
     GetEnumName(g_conf.stack_source).c_str());
@@ -299,7 +303,11 @@ int main()
   LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "We are to execute the task!");
   //system("pause");
 
-  CHECK(DoTask_EnumeratePkgs(), "User-defined operations in the task have NOT been performed fully.");
+  CHECK(DoTask_InstallPackage(), "User-defined operations in the task have NOT been performed fully.");
+
+  /*CHECK(DecompressCabinetToDirectory(L"C:\\Users\\HigHwind\\Desktop\\tmp\\cab\\nt6.3\\windows8.1-kb4511515-x64_413f88394d618b3f07e1d24e606a6b164ff5a104.msu", L"C:\\Users\\HigHwind\\Desktop\\tmp\\cab\\nt6.3\\temp", [](UINT64 completed, UINT64 all){
+    std::wcout << std::format(L"now prog: {:.1f}\n", 100.0*completed/all);
+  }), "User-defined operations in the task have NOT been performed fully.");*/
 
   LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "We are to dispose the manager.");
   CHECK(g_mgr.Dispose(), "Failed to dispose StackManager.");
@@ -312,6 +320,8 @@ int main()
   CoUninitialize();
 
   LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "All resource cleared!");
+
+  getchar();
 
   return S_OK;
 }
