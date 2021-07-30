@@ -133,8 +133,9 @@ enum class CbsApplicability : LONG {
 
 enum class CbsSelectability : LONG {
   InvalidValue = -1,
-  Class1 = 1,
-  Class2 = 2
+  AllClass = 0,
+  SonClass = 1,
+  RootClass = 2
 };
 
 

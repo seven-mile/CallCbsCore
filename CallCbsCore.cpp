@@ -14,6 +14,8 @@
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
+#include "CCbsUpdateTree.h"
+
 HRESULT DoTask_InstallPackage()
 {
   BEGIN_ERROR_HANDLING();
@@ -31,7 +33,7 @@ HRESULT DoTask_InstallPackage()
 
   //InitCommonControls();
 
-  WCHAR file_path[MAX_PATH]{}, file_title[MAX_PATH];
+  WCHAR file_path[MAX_PATH]{};// file_title[MAX_PATH];
   //OPENFILENAMEW ofn{ 0 };
   //ofn.lStructSize = sizeof ofn;
   ////ofn.hwndOwner = GetConsoleWindow();
@@ -149,6 +151,30 @@ HRESULT DoTask_EnumeratePkgs()
   return S_OK;
 }
 
+HRESULT DoTask_EnumerateUpds()
+{
+  BEGIN_ERROR_HANDLING();
+
+  CHECK(g_mgr.GetNewSess(), "Failed to get a new session.");
+
+  ComPtr<CCbsUIHandlerImpl> pUiHandler = new CCbsUIHandlerImpl("UpdLister");
+  ComPtr<IEnumCbsUpdate> pUpds;
+  auto pFound = GetFoundationPackage();
+  if (!pFound)
+    RET_WIN32ERR_LOG(ERROR_NOT_FOUND, "Foundation Package not found!");
+
+  CHECK(pFound->EnumerateUpdates(CbsApplicability::NeedsParent, CbsSelectability::AllClass, &pUpds),
+    "Failed to enum upds from foundation.");
+
+  for (auto& pUpd : GetIEnumComPtrVector<ICbsUpdate>(pUpds)) {
+    CHECK(PrintUpdateInfo(pUpd), "Failed to print update info.");
+  }
+
+  CHECK(g_mgr.SubmitSess(), "Failed to submit the changes in the session.");
+
+  return S_OK;
+}
+
 HRESULT DoTask_EnableHyperV()
 {
   BEGIN_ERROR_HANDLING();
@@ -168,34 +194,6 @@ HRESULT DoTask_EnableHyperV()
   pUpd->SetInstallState(0, CbsInstallState::Installed);
 
   pFound->InitiateChanges(0, CbsInstallState::Installed, pUiHandler);
-
-  /*ComPtr<IEnumCbsUpdate> pUpds;
-  CHECK(pFound->EnumerateUpdates(CbsApplicabilityApplicable, CbsSelectabilityClass1, &pUpds),
-    "Failed to enumerate updates from foundation package.");
-
-  for (auto& pUpd : GetIEnumComPtrVector<ICbsUpdate, IEnumCbsUpdate>(pUpds))
-    PrintUpdateInfo(pUpd);*/
-
-  CHECK(g_mgr.SubmitSess(), "Failed to submit the changes in the session.");
-
-  return S_OK;
-}
-
-HRESULT DoTask_EnumerateUpdates()
-{
-  BEGIN_ERROR_HANDLING();
-
-  CHECK(g_mgr.GetNewSess(), "Failed to get a new session.");
-
-  auto pFound = GetFoundationPackage();
-  assert(pFound);
-
-  ComPtr<IEnumCbsUpdate> pUpds;
-  CHECK(pFound->EnumerateUpdates(CbsApplicability::Applicable, CbsSelectability::Class1, &pUpds),
-    "Failed to enumerate updates from foundation package.");
-
-  for (auto& pUpd : GetIEnumComPtrVector<ICbsUpdate, IEnumCbsUpdate>(pUpds))
-    PrintUpdateInfo(pUpd);
 
   CHECK(g_mgr.SubmitSess(), "Failed to submit the changes in the session.");
 
@@ -268,6 +266,78 @@ HRESULT DoTask_FindFoundation() {
   return S_OK;
 }
 
+HRESULT DoTask_ConstructUpdateTree()
+{
+  BEGIN_ERROR_HANDLING();
+
+  CHECK(g_mgr.GetNewSess(), "Failed to apply new regular session.");
+
+  CCbsUpdateTree tree;
+  auto pFound = GetFoundationPackage();
+  if (!pFound)
+    RET_WIN32ERR_LOG(ERROR_NOT_FOUND, "Failed to get foundation pkg.");
+
+  auto joinUpdates = [&](ComPtr<IEnumCbsUpdate> pUpds){
+    for (auto pUpd : GetIEnumComPtrVector<ICbsUpdate>(pUpds)) {
+      PWSTR strTemp, strTemp2;
+      CHECK(pUpd->GetProperty(CbsUpdateProperty::Name, &strTemp),
+        "Failed to get raw name property of the update.");
+      unique_malloc_ptr<wchar_t> uszName{strTemp};
+      strTemp = nullptr;
+
+      const int CBS_E_ARRAY_ELEMENT_MISSING = -2146498551;
+      hr = pUpd->GetParentUpdate(0, &strTemp, &strTemp2);
+      unique_malloc_ptr<wchar_t> uszParentName;
+      unique_malloc_ptr<wchar_t> uszSet;
+      if (SUCCEEDED(hr)) {
+        uszParentName.reset(strTemp);
+        uszSet.reset(strTemp2);
+        strTemp = strTemp2 = nullptr;
+      }
+
+      const bool hasParent = hr != CBS_E_ARRAY_ELEMENT_MISSING;
+      if (hasParent) {
+        if (SUCCEEDED(hr))
+          tree.AddDependency(uszParentName.get(), uszName.get());
+        else {
+          printf("Hey???\n");
+        }
+      } else {
+        tree.AddDependency(tree.GetRoot(), uszName.get());
+      }
+    }
+    return S_OK;
+  };
+
+  {
+    ComPtr<IEnumCbsUpdate> pUpds;
+    CHECK(pFound->EnumerateUpdates(CbsApplicability::Applicable, CbsSelectability::RootClass, &pUpds),
+      "Failed to get the first batch of updates.");
+    
+    CHECK(joinUpdates(pUpds), "Failed to join the updates to the tree. [First]");
+  }
+  {
+    ComPtr<IEnumCbsUpdate> pUpds;
+    CHECK(pFound->EnumerateUpdates(CbsApplicability::NeedsParent, CbsSelectability::AllClass, &pUpds),
+      "Failed to get the first batch of updates.");
+    
+    CHECK(joinUpdates(pUpds), "Failed to join the updates to the tree. [Second]");
+  }
+
+  std::function<void(std::wstring, std::wstring)> dfsTree;
+  dfsTree = [&](std::wstring cur, std::wstring tabs) {
+    std::wcout << tabs << ' ' << cur << '\n';
+    for (auto& des : tree.GetDescendants(cur))
+      dfsTree(des, tabs + L"====");
+  };
+
+  dfsTree(tree.GetRoot(), L"");
+
+  CHECK(g_mgr.SubmitSess(), "Failed to submit our changes.");
+
+  return S_OK;
+}
+
 int main()
 {
   BEGIN_ERROR_HANDLING();
@@ -290,11 +360,11 @@ int main()
 
   // The env var of app is used to config CBS's logging setting.
   g_conf.SetLogFile(CBS_LOG_FILE);
-  //g_conf.mode = CCbsConfig::SessMode::Online;
-  g_conf.mode = CCbsConfig::SessMode::Offline;
+  g_conf.mode = CCbsConfig::SessMode::Online;
   g_conf.stack_source = CCbsConfig::StackSource::SSShim;
-  g_conf.arg_path = L"D:\\MyCache\\Ws\\Windows";//L"C:\\Windows";
-  g_conf.arg_bootdrive = L"D:\\MyCache\\Ws";
+  //g_conf.mode = CCbsConfig::SessMode::Offline;
+  //g_conf.arg_path = L"D:\\MyCache\\Ws\\Windows";//L"C:\\Windows";
+  //g_conf.arg_bootdrive = L"D:\\MyCache\\Ws";
 
   CHECK(g_mgr.FindStack(), "Failed to find stack [StackSource = %s].",
     GetEnumName(g_conf.stack_source).c_str());
@@ -303,7 +373,7 @@ int main()
   LogA(S_OK, WdsLogSourceUI, WdsLogLevelInfo, "We are to execute the task!");
   //system("pause");
 
-  CHECK(DoTask_InstallPackage(), "User-defined operations in the task have NOT been performed fully.");
+  CHECK(DoTask_ConstructUpdateTree(), "User-defined operations in the task have NOT been performed fully.");
 
   /*CHECK(DecompressCabinetToDirectory(L"C:\\Users\\HigHwind\\Desktop\\tmp\\cab\\nt6.3\\windows8.1-kb4511515-x64_413f88394d618b3f07e1d24e606a6b164ff5a104.msu", L"C:\\Users\\HigHwind\\Desktop\\tmp\\cab\\nt6.3\\temp", [](UINT64 completed, UINT64 all){
     std::wcout << std::format(L"now prog: {:.1f}\n", 100.0*completed/all);

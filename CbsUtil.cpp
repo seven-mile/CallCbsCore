@@ -1590,6 +1590,17 @@ unique_malloc_ptr<wchar_t> sz##y; \
 }
 
   InsertLine(LineSizeLong);
+  PWSTR szParent, szSet;
+  hr = pUpd->GetParentUpdate(0, &szParent, &szSet);
+  const int CBS_E_ARRAY_ELEMENT_MISSING = -2146498551;
+  const bool hasParent = hr != CBS_E_ARRAY_ELEMENT_MISSING;
+
+  unique_malloc_ptr<wchar_t> uszParent, uszSet;
+  if (hasParent) {
+    uszParent.reset(szParent);
+    uszSet.reset(szSet);
+  }
+  szParent = szSet = nullptr;
 
   GUpdProp(DisplayName, Name);
   GUpdProp(Description, Desc);
@@ -1602,6 +1613,17 @@ unique_malloc_ptr<wchar_t> sz##y; \
   _tprintf(L"Raw Name: %s\n", szRawName.get());
   _tprintf(L"Display File: %s\n", szFile.get());
   _tprintf(L"Download Size: %s Bytes\n", szDlSize.get());
+  {
+    CbsInstallState installState, intendedState, requestedState;
+    CHECK(pUpd->GetInstallState(&installState, &intendedState, &requestedState),
+      "Failed to get update install state. [Update = %S]", szRawName.get());
+    _tprintf(L"Install State: %S %S %S\n",
+      GetEnumName(installState).c_str(),
+      GetEnumName(intendedState).c_str(),
+      GetEnumName(requestedState).c_str());
+  }
+  if (hasParent)
+    _tprintf(L"Parent Upd: %s; \tSet: %s\n", uszParent.get(), uszSet.get());
 
   InsertLine(LineSizeLong);
 
